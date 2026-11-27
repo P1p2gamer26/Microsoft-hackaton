@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coffee Value Bridge — Inteligencia de Exportación de Café</title>
+<style>
+  :root{
+    --bg:#f6f7f5; --surface:#ffffff; --surface-2:#f0f2ef; --ink:#1c2420; --muted:#5f6b64;
+    --line:#e3e7e2; --green:#1f6b4a; --green-2:#2e8b63; --amber:#c6882f; --terra:#b2563a;
+    --blue:#2b6b8c; --ok:#1f8a4c; --warn:#c6882f; --bad:#b2563a; --chip:#eef3ef;
+    --shadow:0 1px 2px rgba(20,30,25,.06),0 6px 18px rgba(20,30,25,.05);
+    --r:14px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);color:var(--ink);font-size:14.5px;line-height:1.45;-webkit-font-smoothing:antialiased}
+  a{color:var(--green);text-decoration:none}
+  .app{display:flex;min-height:100vh}
+  /* Sidebar */
+  .side{width:234px;background:var(--surface);border-right:1px solid var(--line);
+    position:sticky;top:0;height:100vh;overflow-y:auto;flex-shrink:0;display:flex;flex-direction:column}
+  .brand{padding:18px 16px 12px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line)}
+  .logo{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--green),var(--amber));
+    display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:16px;flex-shrink:0}
+  .brand b{font-size:14.5px;line-height:1.1;display:block}
+  .brand span{font-size:11px;color:var(--muted)}
+  .nav{padding:8px;flex:1}
+  .nav a{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:9px;color:var(--ink);
+    font-size:13.5px;margin-bottom:1px;cursor:pointer}
+  .nav a:hover{background:var(--chip)}
+  .nav a.active{background:#e7f1ec;color:var(--green);font-weight:600}
+  .nav .ico{width:18px;text-align:center;opacity:.9}
+  .nav .sechead{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);
+    padding:12px 10px 4px;font-weight:700}
+  .tenant{padding:12px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
+  .tenant b{color:var(--ink);display:block;font-size:13px}
+  /* Main */
+  .main{flex:1;min-width:0;display:flex;flex-direction:column}
+  .topbar{position:sticky;top:0;z-index:5;background:rgba(246,247,245,.85);backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--line);padding:12px 22px;display:flex;align-items:center;gap:14px;justify-content:space-between}
+  .topbar h1{font-size:17px;margin:0;font-weight:700}
+  .topbar .sub{font-size:12px;color:var(--muted)}
+  .demo-badge{background:var(--amber);color:#fff;font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:.03em}
+  .content{padding:22px;max-width:1180px;width:100%;margin:0 auto}
+  /* generic */
+  .cards{display:grid;gap:14px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;box-shadow:var(--shadow)}
+  .card h3{margin:0 0 3px;font-size:14px}
+  .card .ch-sub{font-size:12px;color:var(--muted);margin-bottom:10px}
+  .grid-4{grid-template-columns:repeat(4,1fr)}
+  .grid-3{grid-template-columns:repeat(3,1fr)}
+  .grid-2{grid-template-columns:repeat(2,1fr)}
+  @media(max-width:900px){.grid-4,.grid-3,.grid-2{grid-template-columns:1fr 1fr}}
+  @media(max-width:620px){.grid-4,.grid-3,.grid-2{grid-template-columns:1fr}}
+  .kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:15px;box-shadow:var(--shadow)}
+  .kpi .lab{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px}
+  .kpi .val{font-size:25px;font-weight:750;margin-top:4px;letter-spacing:-.01em}
+  .kpi .delta{font-size:11.5px;margin-top:3px}
+  .up{color:var(--ok)} .down{color:var(--bad)}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);
+    padding:8px 10px;border-bottom:1px solid var(--line);font-weight:700;white-space:nowrap}
+  td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+  tr:last-child td{border-bottom:none}
+  tbody tr:hover{background:var(--chip)}
+  .pill{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600}
+  .pill.g{background:#e3f1e9;color:#1f6b4a}.pill.a{background:#fbf0dc;color:#9a6716}
+  .pill.r{background:#f7e4de;color:#8f3f28}.pill.b{background:#e3eef4;color:#245d79}.pill.n{background:#eceee9;color:#5f6b64}
+  .score{display:inline-flex;align-items:center;gap:8px}
+  .bar{height:7px;border-radius:5px;background:var(--line);width:72px;overflow:hidden;flex-shrink:0}
+  .bar>i{display:block;height:100%;border-radius:5px}
+  .btn{display:inline-flex;align-items:center;gap:7px;background:var(--green);color:#fff;border:none;
+    padding:8px 14px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer}
+  .btn:hover{background:var(--green-2)}
+  .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+  .btn.ghost:hover{background:var(--chip)}
+  .btn.sm{padding:5px 10px;font-size:12px}
+  input,select,textarea{font-family:inherit;font-size:13.5px;padding:8px 10px;border:1px solid var(--line);
+    border-radius:9px;background:var(--surface);color:var(--ink);width:100%}
+  label.fld{display:block;margin-bottom:11px}
+  label.fld span{display:block;font-size:12px;color:var(--muted);margin-bottom:4px;font-weight:600}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .src{font-size:11px;color:var(--muted);display:inline-flex;align-items:center;gap:5px}
+  .dot{width:7px;height:7px;border-radius:50%;display:inline-block}
+  .legend{display:flex;flex-wrap:wrap;gap:12px;font-size:11.5px;color:var(--muted);margin-top:8px}
+  .legend b{color:var(--ink)}
+  .tag-origin{color:var(--muted);font-size:11px}
+  /* kanban */
+  .kanban{display:flex;gap:12px;overflow-x:auto;padding-bottom:8px}
+  .kcol{min-width:220px;flex:0 0 220px;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:10px}
+  .kcol h4{margin:0 0 8px;font-size:12px;display:flex;justify-content:space-between;align-items:center}
+  .kcol h4 .n{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:0 7px;font-size:11px;color:var(--muted)}
+  .kcard{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:8px;box-shadow:var(--shadow);cursor:pointer}
+  .kcard b{font-size:12.5px}
+  .kcard .meta{font-size:11px;color:var(--muted);margin-top:3px}
+  .kcard .val{font-size:12px;font-weight:700;color:var(--green);margin-top:5px}
+  .kcard.stale{border-left:3px solid var(--bad)}
+  /* copilot */
+  .chat{display:flex;flex-direction:column;gap:12px}
+  .msg{max-width:88%;padding:11px 13px;border-radius:13px;font-size:13.5px;line-height:1.5}
+  .msg.u{align-self:flex-end;background:var(--green);color:#fff;border-bottom-right-radius:4px}
+  .msg.a{align-self:flex-start;background:var(--surface);border:1px solid var(--line);border-bottom-left-radius:4px}
+  .msg.a .prov{margin-top:8px;font-size:11px;color:var(--muted);border-top:1px dashed var(--line);padding-top:6px}
+  .suggest{display:flex;flex-wrap:wrap;gap:7px;margin-top:4px}
+  .suggest button{background:var(--chip);border:1px solid var(--line);border-radius:20px;padding:6px 11px;font-size:12px;cursor:pointer;color:var(--ink)}
+  .suggest button:hover{background:#e7f1ec;border-color:var(--green)}
+  .note{background:#fbf6ea;border:1px solid #efe0c0;border-radius:11px;padding:11px 13px;font-size:12.5px;color:#7a5a1e;display:flex;gap:9px}
+  .note .i{flex-shrink:0}
+  .method{font-size:12px;color:var(--muted);background:var(--surface-2);border:1px dashed var(--line);border-radius:10px;padding:10px 12px;margin-top:10px}
+  .method code{background:var(--surface);padding:1px 5px;border-radius:5px;font-size:11.5px}
+  .inline-flags{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+  .flag{font-size:10.5px;padding:2px 8px;border-radius:6px;font-weight:600}
+  .flag.real{background:#e3f1e9;color:#1f6b4a}.flag.demo{background:#fbf0dc;color:#9a6716}
+  .flag.calc{background:#e3eef4;color:#245d79}.flag.est{background:#eceae2;color:#7a6a3a}
+  .big-num{font-size:30px;font-weight:780;letter-spacing:-.02em}
+  .muted{color:var(--muted)}
+  .right{text-align:right}
+  .center{text-align:center}
+  .tabs{display:flex;gap:4px;background:var(--surface-2);padding:4px;border-radius:11px;margin-bottom:14px;flex-wrap:wrap}
+  .tabs button{border:none;background:transparent;padding:7px 13px;border-radius:8px;font-size:13px;cursor:pointer;color:var(--muted);font-weight:600}
+  .tabs button.active{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+  .flow{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  .flow .step{background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:6px 9px;font-size:11.5px;position:relative}
+  .flow .step.done{background:#e3f1e9;border-color:#bfe0cd;color:#1f6b4a}
+  .flow .step.cur{background:var(--green);color:#fff;border-color:var(--green)}
+  .flow .arr{color:var(--muted)}
+  .mapwrap{width:100%;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:#eef2ef}
+  .hbars i{display:inline-block;height:9px;border-radius:5px;background:var(--green)}
+  .mini{font-size:11.5px;color:var(--muted)}
+  .divider{height:1px;background:var(--line);margin:14px 0}
+  .menu-toggle{display:none}
+  @media(max-width:860px){
+    .side{position:fixed;left:-240px;z-index:40;transition:.2s;box-shadow:var(--shadow)}
+    .side.open{left:0}
+    .menu-toggle{display:inline-flex}
+    .content{padding:16px}
+    .kpi .val{font-size:22px}
+  }
+  .scrim{display:none;position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:30}
+  .scrim.open{display:block}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side" id="side">
+    <div class="brand">
+      <div class="logo">C</div>
+      <div><b>Coffee Value Bridge</b><span>Inteligencia de exportación</span></div>
+    </div>
+    <nav class="nav" id="nav"></nav>
+    <div class="tenant">
+      <b id="tenantName">Café de los Andes S.A.S.</b>
+      Exportador · Plan Crecer · Bogotá
+    </div>
+  </aside>
+  <div class="scrim" id="scrim" onclick="toggleMenu()"></div>
+  <main class="main">
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:12px">
+        <button class="btn ghost sm menu-toggle" onclick="toggleMenu()">☰</button>
+        <div>
+          <h1 id="pageTitle">Inicio ejecutivo</h1>
+          <div class="sub" id="pageSub">Estado comercial del negocio</div>
+        </div>
+      </div>
+      <div class="demo-badge">ENTORNO DEMO</div>
+    </div>
+    <div class="content" id="view"></div>
+  </main>
+</div>
+
+<script>
+/* ============================================================
+   COFFEE VALUE BRIDGE — MVP demostrativo (100% cliente)
+   Datos DEMO claramente rotulados. Fórmulas visibles.
+   No se presentan estimaciones como datos oficiales.
+   ============================================================ */
+
+/* ---------- DATA (DEMO) ---------- */
+const DB = {
+  tenant:{name:"Café de los Andes S.A.S.", plan:"Crecer"},
+  // Productos / lotes exportables
+  products:[
+    {id:"L-001",name:"Huila Especialidad 86+",form:"Tostado",grind:"Grano",origin:"Huila",variety:"Caturra",
+     cup:86,roast:"Medio",pack:"Bolsa válvula 340g",kg:500,minKg:120,price:14.2,cost:7.1,
+     certs:["Orgánico","FairTrade"],segment:"Especialidad",avail:"2026-11-10"},
+    {id:"L-002",name:"Nariño Verde Lavado",form:"Verde",grind:"Grano",origin:"Nariño",variety:"Castillo",
+     cup:84,roast:"—",pack:"Saco 70kg",kg:9800,minKg:1750,price:5.9,cost:3.6,
+     certs:["Rainforest"],segment:"Comercial premium",avail:"2026-11-02"},
+    {id:"L-003",name:"Antioquia Tostado Molido",form:"Tostado",grind:"Molido",origin:"Antioquia",variety:"Colombia",
+     cup:82,roast:"Alto",pack:"Doypack 250g",kg:300,minKg:60,price:11.8,cost:6.4,
+     certs:[],segment:"Marca propia",avail:"2026-11-20"},
+    {id:"L-004",name:"Tolima Verde Honey",form:"Verde",grind:"Grano",origin:"Tolima",variety:"Pink Bourbon",
+     cup:87,roast:"—",pack:"GrainPro 30kg",kg:1200,minKg:300,price:8.4,cost:4.9,
+     certs:["Orgánico"],segment:"Especialidad",avail:"2026-11-18"},
+  ],
+  // Mercados con indicadores (DEMO, no oficiales)
+  markets:[
+    {c:"Estados Unidos",iso:"US",size:92,trend:71,growth:64,comp:78,unitVal:82,barriers:22,logi:86,risk:24},
+    {c:"Alemania",iso:"DE",size:80,trend:66,growth:58,comp:74,unitVal:79,barriers:34,logi:72,risk:20},
+    {c:"Corea del Sur",iso:"KR",size:61,trend:88,growth:84,comp:52,unitVal:85,barriers:30,logi:68,risk:28},
+    {c:"Canadá",iso:"CA",size:55,trend:69,growth:61,comp:58,unitVal:77,barriers:26,logi:80,risk:18},
+    {c:"Japón",iso:"JP",size:70,trend:58,growth:49,comp:69,unitVal:88,barriers:38,logi:66,risk:22},
+    {c:"Emiratos Árabes",iso:"AE",size:44,trend:82,growth:79,comp:41,unitVal:81,barriers:28,logi:62,risk:34},
+  ],
+  // Compradores (DEMO)
+  buyers:[
+    {id:"B-01",name:"North Roast Collective",country:"Estados Unidos",city:"Portland",type:"Tostador",
+     seg:"Especialidad",wants:"Tostado",volKg:2400,targetPrice:13.5,certsReq:["Orgánico"],status:"Calificado",verified:true},
+    {id:"B-02",name:"Hansa Kaffee Import",country:"Alemania",city:"Hamburgo",type:"Importador",
+     seg:"Comercial premium",wants:"Verde",volKg:21000,targetPrice:6.2,certsReq:["Rainforest"],status:"En investigación",verified:false},
+    {id:"B-03",name:"Seoul Bean Lab",country:"Corea del Sur",city:"Seúl",type:"Cadena de cafeterías",
+     seg:"Especialidad",wants:"Verde",volKg:3600,targetPrice:8.0,certsReq:["Orgánico"],status:"Calificado",verified:true},
+    {id:"B-04",name:"Maple & Bean Co.",country:"Canadá",city:"Toronto",type:"Distribuidor",
+     seg:"Marca propia",wants:"Tostado",volKg:1800,targetPrice:11.0,certsReq:[],status:"Potencial no verificado",verified:false},
+    {id:"B-05",name:"Desert Brew Trading",country:"Emiratos Árabes",city:"Dubái",type:"Mayorista",
+     seg:"Especialidad",wants:"Tostado",volKg:1500,targetPrice:15.5,certsReq:[],status:"Primer contacto",verified:false},
+  ],
+  // Oportunidades / pipeline (DEMO)
+  opps:[
+    {id:"O-1001",buyer:"B-01",product:"L-001",stage:"Negociación",volKg:1200,value:16560,prob:65,
+     owner:"Sarid H.",lastActivity:"2026-11-24",nextTask:"Enviar cotización v2",nextDate:"2026-11-28",
+     events:{disp:"2026-11-10",pub:"2026-11-11",firstOpp:"2026-11-12",qbuyer:"2026-11-13",contact:"2026-11-14",resp:"2026-11-16",sample:"2026-11-18",quote:"2026-11-22"}},
+    {id:"O-1002",buyer:"B-03",product:"L-004",stage:"Muestra enviada",volKg:900,value:7560,prob:45,
+     owner:"Sarid H.",lastActivity:"2026-11-15",nextTask:null,nextDate:null,
+     events:{disp:"2026-11-18",pub:"2026-11-18",firstOpp:"2026-11-19",qbuyer:"2026-11-20",contact:"2026-11-21",resp:"2026-11-23",sample:"2026-11-25"}},
+    {id:"O-1003",buyer:"B-02",product:"L-002",stage:"Primer contacto",volKg:14000,value:82600,prob:25,
+     owner:"David Z.",lastActivity:"2026-11-26",nextTask:"Confirmar certificación Rainforest",nextDate:"2026-11-30",
+     events:{disp:"2026-11-02",pub:"2026-11-03",firstOpp:"2026-11-05",qbuyer:"2026-11-08",contact:"2026-11-26"}},
+    {id:"O-1004",buyer:"B-05",product:"L-003",stage:"Cotización enviada",volKg:600,value:7080,prob:55,
+     owner:"Pedro A.",lastActivity:"2026-11-13",nextTask:null,nextDate:null,
+     events:{disp:"2026-11-20",pub:"2026-11-20",firstOpp:"2026-11-21",qbuyer:"2026-11-22",contact:"2026-11-23",resp:"2026-11-24",quote:"2026-11-25"}},
+    {id:"O-1005",buyer:"B-04",product:"L-003",stage:"Venta cerrada",volKg:900,value:9900,prob:100,
+     owner:"Sarid H.",lastActivity:"2026-11-10",nextTask:null,nextDate:null,
+     events:{disp:"2026-10-15",pub:"2026-10-16",firstOpp:"2026-10-18",qbuyer:"2026-10-20",contact:"2026-10-22",resp:"2026-10-25",sample:"2026-10-29",quote:"2026-11-02",order:"2026-11-08",dispatch:"2026-11-10"}},
+  ],
+  // Nodos geográficos (esquemático, no geo real)
+  geo:{
+    origins:[{n:"Huila",x:130,y:250},{n:"Nariño",x:95,y:320},{n:"Tolima",x:160,y:210},{n:"Antioquia",x:150,y:140}],
+    ports:[{n:"Buenaventura",x:70,y:200},{n:"Cartagena",x:150,y:60},{n:"Sta. Marta",x:200,y:50}],
+    dest:[{n:"EE.UU.",x:470,y:110},{n:"Alemania",x:560,y:90},{n:"Corea",x:690,y:150},{n:"EAU",x:600,y:200}]
+  }
+};
+
+/* ---------- SCORING ENGINES (fórmulas transparentes) ---------- */
+const MOS_W = {size:0.20, trend:0.18, growth:0.14, unitVal:0.14, comp:0.12, barriers:0.10, logi:0.07, risk:0.05};
+function marketScore(m){
+  const s = m.size*MOS_W.size + m.trend*MOS_W.trend + m.growth*MOS_W.growth +
+            m.unitVal*MOS_W.unitVal + (100-m.comp)*MOS_W.comp + (100-m.barriers)*MOS_W.barriers +
+            m.logi*MOS_W.logi + (100-m.risk)*MOS_W.risk;
+  return Math.round(s);
+}
+// Buyer Match: compara comprador vs producto
+function buyerMatch(buyer, prod){
+  let parts=[], total=0, wsum=0;
+  const add=(label,w,val)=>{parts.push({label,w,val:Math.round(val)});total+=val*w;wsum+=w;};
+  add("Tipo de producto",0.25, buyer.wants===prod.form?100:25);
+  add("Segmento",0.18, buyer.seg===prod.segment?100:(Math.abs(segIdx(buyer.seg)-segIdx(prod.segment))<=1?60:30));
+  const volFit = prod.kg>=buyer.volKg?100:Math.round(prod.kg/buyer.volKg*100);
+  add("Volumen / abasto",0.20, Math.min(100,volFit));
+  const pr = buyer.targetPrice? Math.max(0,100-Math.abs(prod.price-buyer.targetPrice)/buyer.targetPrice*180):50;
+  add("Precio objetivo",0.17, pr);
+  const certOk = buyer.certsReq.length===0?70:Math.round(buyer.certsReq.filter(c=>prod.certs.includes(c)).length/buyer.certsReq.length*100);
+  add("Certificaciones",0.12, certOk);
+  add("Verificación de datos",0.08, buyer.verified?100:40);
+  return {score:Math.round(total/wsum), parts};
+}
+function segIdx(s){return ["Comercial premium","Marca propia","Especialidad"].indexOf(s);}
+
+/* ---------- COST / COTIZADOR ENGINE ---------- */
+function quote(cfg){
+  // cfg: {materiaPrima, transformacion, merma, empaque, etiquetado, almacenamiento,
+  //       transpInterno, fleteIntl, seguro, documentacion, arancelPct, distribucion, comisionPct, precioVenta, kg}
+  const unit = {};
+  unit.materiaPrima=cfg.materiaPrima;
+  unit.transformacion=cfg.transformacion;
+  unit.merma = cfg.materiaPrima*(cfg.merma/100);
+  unit.empaque=cfg.empaque; unit.etiquetado=cfg.etiquetado; unit.almacenamiento=cfg.almacenamiento;
+  unit.transpInterno=cfg.transpInterno; unit.fleteIntl=cfg.fleteIntl; unit.seguro=cfg.seguro;
+  unit.documentacion=cfg.documentacion;
+  const subtotal = unit.materiaPrima+unit.transformacion+unit.merma+unit.empaque+unit.etiquetado+
+    unit.almacenamiento+unit.transpInterno+unit.fleteIntl+unit.seguro+unit.documentacion;
+  unit.arancel = cfg.precioVenta*(cfg.arancelPct/100);
+  unit.distribucion=cfg.distribucion;
+  unit.comision = cfg.precioVenta*(cfg.comisionPct/100);
+  const totalCost = subtotal+unit.arancel+unit.distribucion+unit.comision;
+  const mBruto = cfg.precioVenta-subtotal;          // margen bruto (antes de costos comerciales)
+  const mContrib = cfg.precioVenta-totalCost;        // margen de contribución
+  return {unit,subtotal,totalCost,mBruto,mContrib,
+    mBrutoPct:(mBruto/cfg.precioVenta*100),mContribPct:(mContrib/cfg.precioVenta*100),
+    ingresos:cfg.precioVenta*cfg.kg, utilidad:mContrib*cfg.kg, capital:subtotal*cfg.kg};
+}
+
+/* ---------- TIME TO MARKET ---------- */
+const CYCLE=[
+  ["disp","Disponible"],["pub","Publicado"],["firstOpp","1ª oportunidad"],["qbuyer","Comprador calificado"],
+  ["contact","1er contacto"],["resp","1ª respuesta"],["sample","Muestra"],["quote","Cotización"],
+  ["order","Pedido"],["dispatch","Despacho"]
+];
+function daysBetween(a,b){if(!a||!b)return null;return Math.round((new Date(b)-new Date(a))/864e5);}
+function oppMetrics(o){
+  const e=o.events;
+  return {
+    toFirstOpp:daysBetween(e.pub,e.firstOpp),
+    toQBuyer:daysBetween(e.firstOpp,e.qbuyer),
+    toContact:daysBetween(e.qbuyer,e.contact),
+    toResp:daysBetween(e.contact,e.resp),
+    toQuote:daysBetween(e.resp||e.sample,e.quote),
+    total:daysBetween(e.disp, e.order||e.quote||e.sample||e.contact)
+  };
+}
+function staleDays(o){ if(o.stage==="Venta cerrada"||o.stage==="Operación perdida")return 0;
+  return daysBetween(o.lastActivity,"2026-11-27"); }
+
+/* ---------- HELPERS ---------- */
+const $=s=>document.querySelector(s);
+const money=n=>"$"+Math.round(n).toLocaleString("en-US");
+const money2=n=>"$"+n.toFixed(2);
+function scoreColor(s){return s>=70?"var(--green)":s>=50?"var(--amber)":"var(--terra)";}
+function barHtml(s){return `<span class="score"><span class="bar"><i style="width:${s}%;background:${scoreColor(s)}"></i></span><b>${s}</b></span>`;}
+function prodById(id){return DB.products.find(p=>p.id===id)}
+function buyerById(id){return DB.buyers.find(b=>b.id===id)}
+function flags(arr){return `<div class="inline-flags">${arr.map(f=>`<span class="flag ${f[0]}">${f[1]}</span>`).join("")}</div>`}
+
+/* ---------- NAV ---------- */
+const NAV=[
+  {s:"Decidir"},
+  {id:"home",ico:"◧",t:"Inicio ejecutivo",sub:"Estado comercial del negocio"},
+  {id:"markets",ico:"◉",t:"Inteligencia de mercados",sub:"Detección y priorización de oportunidades"},
+  {id:"offer",ico:"◆",t:"Oferta exportable",sub:"Caracterización de producto y capacidades"},
+  {s:"Vender"},
+  {id:"buyers",ico:"◎",t:"Compradores",sub:"Buyer Intelligence + Match Score"},
+  {id:"crm",ico:"▦",t:"CRM internacional",sub:"Pipeline comercial"},
+  {id:"quote",ico:"∑",t:"Cotizador y rentabilidad",sub:"Costos, margen y comparador verde/tostado"},
+  {s:"Ejecutar"},
+  {id:"feasibility",ico:"⚖",t:"Viabilidad de exportación",sub:"Simulador de escenarios"},
+  {id:"gis",ico:"◈",t:"Inteligencia geográfica",sub:"Orígenes, puertos y destinos (esquemático)"},
+  {id:"ttm",ico:"⏱",t:"Time to Market",sub:"Ciclo comercial y cuellos de botella"},
+  {s:"Asistir"},
+  {id:"copilot",ico:"✦",t:"Coffee Intelligence Copilot",sub:"Analista comercial basado en reglas"},
+  {id:"data",ico:"⛃",t:"Centro de datos",sub:"Fuentes, trazabilidad y clasificación"},
+];
+function renderNav(){
+  $("#nav").innerHTML = NAV.map(n=> n.s? `<div class="sechead">${n.s}</div>`:
+    `<a data-id="${n.id}" onclick="go('${n.id}')"><span class="ico">${n.ico}</span>${n.t}</a>`).join("");
+}
+let CURRENT="home";
+function go(id){
+  CURRENT=id; const n=NAV.find(x=>x.id===id);
+  $("#pageTitle").textContent=n.t; $("#pageSub").textContent=n.sub;
+  document.querySelectorAll(".nav a").forEach(a=>a.classList.toggle("active",a.dataset.id===id));
+  VIEWS[id](); window.scrollTo(0,0);
+  if(window.innerWidth<=860) closeMenu();
+}
+function toggleMenu(){$("#side").classList.toggle("open");$("#scrim").classList.toggle("open");}
+function closeMenu(){$("#side").classList.remove("open");$("#scrim").classList.remove("open");}
+
+/* ============================================================
+   VIEWS
+   ============================================================ */
+const VIEWS={};
+
+/* ---- HOME ---- */
+VIEWS.home=function(){
+  const opps=DB.opps;
+  const pipeline=opps.filter(o=>!["Venta cerrada","Operación perdida"].includes(o.stage));
+  const pipeVal=pipeline.reduce((a,o)=>a+o.value,0);
+  const won=opps.filter(o=>o.stage==="Venta cerrada");
+  const wonVal=won.reduce((a,o)=>a+o.value,0);
+  const conv=Math.round(won.length/opps.length*100);
+  const qBuyers=DB.buyers.filter(b=>b.status==="Calificado").length;
+  const avgTtm=Math.round(won.map(o=>oppMetrics(o).total).filter(Boolean).reduce((a,b,_,arr)=>a+b/arr.length,0));
+  const stale=pipeline.filter(o=>staleDays(o)>=7);
+  const kpis=[
+    ["Pipeline activo",money(pipeVal),`${pipeline.length} oportunidades`,"up"],
+    ["Ventas cerradas",money(wonVal),`${won.length} operación · mes`,"up"],
+    ["Tasa de conversión",conv+"%","sobre oportunidades totales","up"],
+    ["Compradores calificados",qBuyers,"de "+DB.buyers.length+" registrados",""],
+    ["Time to Market prom.",avgTtm+" días","producto disponible → pedido","down"],
+    ["Oportunidades estancadas",stale.length,"≥ 7 días sin actividad","down"],
+    ["Mercados priorizados",DB.markets.filter(m=>marketScore(m)>=65).length,"score ≥ 65","up"],
+    ["Productos disponibles",DB.products.length,DB.products.reduce((a,p)=>a+p.kg,0).toLocaleString()+" kg","up"],
+  ];
+  // pipeline por etapa (SVG bars)
+  const stages=["Primer contacto","Muestra enviada","Cotización enviada","Negociación"];
+  const byStage=stages.map(s=>({s,v:opps.filter(o=>o.stage===s).reduce((a,o)=>a+o.value,0)}));
+  const maxv=Math.max(...byStage.map(b=>b.v),1);
+  let html=`
+  <div class="cards grid-4">${kpis.map(k=>`
+    <div class="kpi"><div class="lab">${k[0]}</div><div class="val">${k[1]}</div>
+    <div class="delta ${k[3]}">${k[3]==="up"?"▲":k[3]==="down"?"▼":"•"} ${k[2]}</div></div>`).join("")}
+  </div>
+  <div class="cards grid-2" style="margin-top:14px">
+    <div class="card">
+      <h3>Valor del pipeline por etapa</h3>
+      <div class="ch-sub">Oportunidades abiertas · USD</div>
+      ${byStage.map(b=>`<div style="margin:9px 0">
+        <div style="display:flex;justify-content:space-between;font-size:12.5px"><span>${b.s}</span><b>${money(b.v)}</b></div>
+        <div class="bar" style="width:100%;height:9px;margin-top:4px"><i style="width:${b.v/maxv*100}%;background:var(--green)"></i></div>
+      </div>`).join("")}
+    </div>
+    <div class="card">
+      <h3>Acciones que requieren tu atención</h3>
+      <div class="ch-sub">Detectadas por reglas sobre el pipeline</div>
+      ${stale.map(o=>{const b=buyerById(o.buyer);return `
+        <div class="note" style="margin-bottom:9px">
+          <span class="i">⚠️</span>
+          <div><b>${o.id} · ${b.name}</b> lleva <b>${staleDays(o)} días</b> sin actividad en etapa «${o.stage}»${o.nextTask?"":" y <b>sin próxima tarea programada</b>"}. Se recomienda seguimiento comercial.</div>
+        </div>`}).join("") || '<div class="mini">Sin alertas: todas las oportunidades tienen actividad reciente.</div>'}
+    </div>
+  </div>
+  <div class="card" style="margin-top:14px">
+    <h3>Oportunidades recientes</h3>
+    <div class="ch-sub">Clic en «CRM internacional» para el tablero completo</div>
+    <table><thead><tr><th>ID</th><th>Comprador</th><th>Producto</th><th>Etapa</th><th class="right">Valor</th><th class="right">Prob.</th><th>Próxima tarea</th></tr></thead>
+    <tbody>${opps.map(o=>{const b=buyerById(o.buyer),p=prodById(o.product);
+      return `<tr><td><b>${o.id}</b></td><td>${b.name}<div class="mini">${b.country}</div></td>
+      <td>${p.name}</td><td>${stagePill(o.stage)}</td><td class="right">${money(o.value)}</td>
+      <td class="right">${o.prob}%</td><td>${o.nextTask?o.nextTask+`<div class="mini">${o.nextDate}</div>`:'<span class="pill r">sin tarea</span>'}</td></tr>`}).join("")}</tbody></table>
+  </div>
+  <div class="note" style="margin-top:14px"><span class="i">ℹ️</span>
+  <div>Todos los indicadores se calculan sobre registros <b>DEMO</b> rotulados. Ninguna cifra proviene de una fuente oficial conectada. En producción, el panel se alimenta de tus operaciones reales y de los conectores habilitados.</div></div>`;
+  $("#view").innerHTML=html;
+};
+function stagePill(s){
+  const map={"Primer contacto":"b","Muestra enviada":"a","Cotización enviada":"a","Negociación":"g","Venta cerrada":"g","Operación perdida":"r"};
+  return `<span class="pill ${map[s]||"n"}">${s}</span>`;
+}
+
+/* ---- MARKETS ---- */
+VIEWS.markets=function(){
+  const rows=DB.markets.map(m=>({m,s:marketScore(m)})).sort((a,b)=>b.s-a.s);
+  let html=`
+  <div class="note"><span class="i">ℹ️</span><div><b>Market Opportunity Score</b> — indicador compuesto y transparente (0–100). Variables y ponderaciones visibles abajo. Datos de indicadores: <b>DEMO</b>, no oficiales. En producción se alimentan de fuentes como UN Comtrade / WITS mediante conectores con trazabilidad.</div></div>
+  <div class="card" style="margin-top:14px">
+    <h3>Mercados priorizados para tu oferta</h3>
+    <div class="ch-sub">Ordenados por score · actualizado 2026-11-27 · confianza: media (datos demo)</div>
+    <table><thead><tr><th>Mercado</th><th>Score</th><th>Tamaño</th><th>Tendencia</th><th>Crecim.</th><th>Valor unit.</th><th>Competencia</th><th>Barreras</th><th>Riesgo</th></tr></thead>
+    <tbody>${rows.map(r=>`<tr>
+      <td><b>${r.m.c}</b> <span class="tag-origin">${r.m.iso}</span></td>
+      <td>${barHtml(r.s)}</td>
+      <td>${r.m.size}</td><td>${r.m.trend}</td><td>${r.m.growth}</td><td>${r.m.unitVal}</td>
+      <td>${r.m.comp}</td><td>${r.m.barriers}</td><td>${r.m.risk}</td></tr>`).join("")}</tbody></table>
+    <div class="method"><b>Metodología del score</b> · suma ponderada normalizada 0–100:<br>
+    <code>MOS = 0.20·Tamaño + 0.18·Tendencia + 0.14·Crecimiento + 0.14·ValorUnitario + 0.12·(100−Competencia) + 0.10·(100−Barreras) + 0.07·Logística + 0.05·(100−Riesgo)</code><br>
+    Las ponderaciones son configurables por empresa. Cada variable muestra su fuente y fecha. La competencia, las barreras y el riesgo se restan (penalizan).</div>
+  </div>
+  <div class="cards grid-3" style="margin-top:14px">${rows.slice(0,3).map(r=>`
+    <div class="card"><h3>${r.m.c}</h3><div class="ch-sub">Por qué es atractivo</div>
+      <div style="font-size:13px">
+      ${r.m.growth>=60?"✅ Demanda en crecimiento sostenido<br>":""}
+      ${r.m.unitVal>=80?"✅ Alto valor unitario de importación<br>":""}
+      ${r.m.comp>=70?"⚠️ Mercado competido (muchos orígenes)<br>":""}
+      ${r.m.barriers>=32?"⚠️ Barreras regulatorias relevantes<br>":"✅ Barreras de entrada moderadas<br>"}
+      ${r.m.risk>=30?"⚠️ Riesgo comercial a vigilar<br>":""}
+      </div>
+      <div class="divider"></div>
+      <div class="mini"><b>Falta confirmar:</b> precio FOB de referencia reciente y requisitos sanitarios del destino (requiere conector o carga manual).</div>
+    </div>`).join("")}</div>`;
+  $("#view").innerHTML=html;
+};
+
+/* ---- OFFER ---- */
+VIEWS.offer=function(){
+  let html=`
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <div class="mini">4 lotes · ${DB.products.reduce((a,p)=>a+p.kg,0).toLocaleString()} kg disponibles</div>
+    <button class="btn sm" onclick="alert('Formulario de registro de producto (DEMO). En producción guarda el lote con trazabilidad.')">+ Registrar producto</button>
+  </div>
+  <div class="cards grid-2">${DB.products.map(p=>`
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:start">
+        <div><h3>${p.name}</h3><div class="ch-sub">${p.id} · ${p.origin} · ${p.variety}</div></div>
+        <span class="pill ${p.form==="Verde"?"g":"a"}">${p.form} ${p.grind}</span>
+      </div>
+      <table style="margin-top:4px"><tbody>
+        <tr><td class="muted">Perfil de taza</td><td class="right"><b>${p.cup}</b> pts · ${p.segment}</td></tr>
+        <tr><td class="muted">Presentación</td><td class="right">${p.pack}</td></tr>
+        <tr><td class="muted">Disponible</td><td class="right">${p.kg.toLocaleString()} kg (mín. ${p.minKg})</td></tr>
+        <tr><td class="muted">Precio base / costo</td><td class="right">${money2(p.price)} / ${money2(p.cost)} kg</td></tr>
+        <tr><td class="muted">Margen base</td><td class="right"><b style="color:${scoreColor((p.price-p.cost)/p.price*100)}">${Math.round((p.price-p.cost)/p.price*100)}%</b></td></tr>
+        <tr><td class="muted">Certificaciones</td><td class="right">${p.certs.length?p.certs.map(c=>`<span class="pill g">${c}</span>`).join(" "):'<span class="mini">—</span>'}</td></tr>
+      </tbody></table>
+      <button class="btn ghost sm" style="margin-top:10px;width:100%" onclick="go('buyers')">Ver compradores compatibles →</button>
+    </div>`).join("")}</div>
+  <div class="note" style="margin-top:14px"><span class="i">ℹ️</span><div>El sistema <b>no</b> recomienda un mercado solo porque importe mucho café: el motor Product–Market Fit cruza forma, presentación, precio, volumen y certificaciones del lote contra cada oportunidad.</div></div>`;
+  $("#view").innerHTML=html;
+};
+
+/* ---- BUYERS ---- */
+let MATCH_PROD="L-001";
+VIEWS.buyers=function(){
+  const prod=prodById(MATCH_PROD);
+  const ranked=DB.buyers.map(b=>({b,m:buyerMatch(b,prod)})).sort((a,b)=>b.m.score-a.m.score);
+  let html=`
+  <div class="card">
+    <h3>Buyer Match Score</h3>
+    <div class="ch-sub">Compatibilidad entre cada comprador registrado y el producto seleccionado</div>
+    <label class="fld" style="max-width:360px"><span>Producto a evaluar</span>
+      <select onchange="MATCH_PROD=this.value;VIEWS.buyers()">${DB.products.map(p=>`<option value="${p.id}" ${p.id===MATCH_PROD?"selected":""}>${p.name} (${p.form})</option>`).join("")}</select></label>
+    <table><thead><tr><th>Comprador</th><th>Tipo</th><th>Match</th><th>Estado</th><th>Vol. objetivo</th><th>Precio obj.</th><th></th></tr></thead>
+    <tbody>${ranked.map(r=>`<tr>
+      <td><b>${r.b.name}</b><div class="mini">${r.b.city}, ${r.b.country}</div></td>
+      <td>${r.b.type}</td><td>${barHtml(r.m.score)}</td>
+      <td>${verifyPill(r.b.status)}</td>
+      <td>${r.b.volKg.toLocaleString()} kg</td><td>${money2(r.b.targetPrice)}</td>
+      <td><button class="btn ghost sm" onclick="showMatch('${r.b.id}')">¿Por qué?</button></td></tr>`).join("")}</tbody></table>
+    <div class="method"><b>Match = </b> 0.25·TipoProducto + 0.20·Volumen + 0.18·Segmento + 0.17·Precio + 0.12·Certificaciones + 0.08·Verificación. Cuando no hay evidencia suficiente el comprador se marca <b>Potencial no verificado</b>; no se inventan contactos, volúmenes ni intenciones.</div>
+  </div>
+  <div id="matchDetail"></div>`;
+  $("#view").innerHTML=html;
+};
+function verifyPill(s){const map={"Calificado":"g","En investigación":"b","Primer contacto":"a","Potencial no verificado":"n"};return `<span class="pill ${map[s]||"n"}">${s}</span>`;}
+function showMatch(bid){
+  const b=buyerById(bid),p=prodById(MATCH_PROD),m=buyerMatch(b,p);
+  $("#matchDetail").innerHTML=`<div class="card" style="margin-top:14px">
+    <h3>Desglose · ${b.name} ↔ ${p.name}</h3>
+    <div class="ch-sub">Score ${m.score}/100 · ${b.verified?'<span class="src"><span class="dot" style="background:var(--ok)"></span>fuente verificada</span>':'<span class="src"><span class="dot" style="background:var(--amber)"></span>potencial no verificado</span>'}</div>
+    <table><thead><tr><th>Factor</th><th>Peso</th><th>Valor</th><th></th></tr></thead><tbody>
+    ${m.parts.map(pt=>`<tr><td>${pt.label}</td><td>${Math.round(pt.w*100)}%</td><td><b>${pt.val}</b></td><td style="width:140px">${barHtml(pt.val)}</td></tr>`).join("")}
+    </tbody></table>
+    ${b.certsReq.length&&b.certsReq.some(c=>!p.certs.includes(c))?`<div class="note" style="margin-top:10px"><span class="i">⚠️</span><div>Requiere <b>${b.certsReq.filter(c=>!p.certs.includes(c)).join(", ")}</b> y el lote no la tiene. Falta este dato para calificar plenamente.</div></div>`:""}
+    <button class="btn sm" style="margin-top:10px" onclick="alert('Oportunidad creada desde el match (DEMO). Pasaría a «CRM internacional».')">Crear oportunidad comercial →</button>
+  </div>`;
+  $("#matchDetail").scrollIntoView({behavior:"smooth",block:"nearest"});
+}
+
+/* ---- CRM ---- */
+VIEWS.crm=function(){
+  const stages=["Primer contacto","Muestra enviada","Cotización enviada","Negociación","Venta cerrada"];
+  let html=`<div class="mini" style="margin-bottom:12px">Pipeline comercial · arrastra mentalmente las tarjetas entre etapas · borde rojo = sin actividad ≥7 días</div>
+  <div class="kanban">${stages.map(s=>{
+    const list=DB.opps.filter(o=>o.stage===s);
+    const val=list.reduce((a,o)=>a+o.value,0);
+    return `<div class="kcol"><h4>${s} <span class="n">${list.length}</span></h4>
+      <div class="mini" style="margin:-4px 0 8px">${money(val)}</div>
+      ${list.map(o=>{const b=buyerById(o.buyer),p=prodById(o.product),st=staleDays(o);
+        return `<div class="kcard ${st>=7?"stale":""}" onclick="oppDetail('${o.id}')">
+          <b>${b.name}</b><div class="meta">${o.id} · ${p.name}</div>
+          <div class="meta">${o.volKg.toLocaleString()} kg · ${o.owner}</div>
+          <div class="val">${money(o.value)} · ${o.prob}%</div>
+          ${st>=7?`<div class="mini" style="color:var(--bad);margin-top:4px">⚠ ${st} días sin actividad</div>`:""}
+        </div>`}).join("")||'<div class="mini">—</div>'}
+    </div>`}).join("")}</div>
+  <div id="oppDetail"></div>`;
+  $("#view").innerHTML=html;
+};
+function oppDetail(oid){
+  const o=DB.opps.find(x=>x.id===oid),b=buyerById(o.buyer),p=prodById(o.product),mt=oppMetrics(o);
+  $("#oppDetail").innerHTML=`<div class="card" style="margin-top:14px">
+    <div style="display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:10px">
+      <div><h3>${o.id} · ${b.name}</h3><div class="ch-sub">${p.name} · ${o.volKg.toLocaleString()} kg · responsable ${o.owner}</div></div>
+      ${stagePill(o.stage)}
+    </div>
+    <div class="cards grid-4" style="margin-top:6px">
+      <div class="kpi"><div class="lab">Valor estimado</div><div class="val" style="font-size:20px">${money(o.value)}</div></div>
+      <div class="kpi"><div class="lab">Probabilidad</div><div class="val" style="font-size:20px">${o.prob}%</div></div>
+      <div class="kpi"><div class="lab">Días en ciclo</div><div class="val" style="font-size:20px">${mt.total??"—"}</div></div>
+      <div class="kpi"><div class="lab">Sin actividad</div><div class="val" style="font-size:20px;color:${staleDays(o)>=7?'var(--bad)':'var(--ink)'}">${staleDays(o)} d</div></div>
+    </div>
+    <div class="divider"></div>
+    <h3 style="font-size:13px">Línea de tiempo del ciclo comercial</h3>
+    <div class="flow" style="margin-top:8px">${CYCLE.map((c,i)=>{
+      const has=o.events[c[0]]; const isCur=!has && o.events[CYCLE[i-1]?.[0]];
+      return `${i?'<span class="arr">→</span>':''}<span class="step ${has?'done':isCur?'cur':''}">${c[1]}${has?`<br><span style="opacity:.7">${o.events[c[0]].slice(5)}</span>`:""}</span>`}).join("")}</div>
+    ${o.nextTask?`<div class="note" style="margin-top:12px"><span class="i">📌</span><div>Próxima tarea: <b>${o.nextTask}</b> — ${o.nextDate}</div></div>`:
+      (o.stage!=="Venta cerrada"?`<div class="note" style="margin-top:12px"><span class="i">⚠️</span><div><b>No hay próxima tarea programada.</b> Riesgo de estancamiento. Programa un seguimiento.</div></div>`:"")}
+  </div>`;
+  $("#oppDetail").scrollIntoView({behavior:"smooth",block:"nearest"});
+}
+
+/* ---- QUOTE ---- */
+let Q={materiaPrima:7.10,transformacion:1.30,merma:2,empaque:0.65,etiquetado:0.18,almacenamiento:0.22,
+  transpInterno:0.35,fleteIntl:0.95,seguro:0.14,documentacion:0.20,arancelPct:0,distribucion:0.30,comisionPct:5,precioVenta:14.20,kg:1200};
+VIEWS.quote=function(){
+  const r=quote(Q);
+  const fld=(k,lab,step="0.01",suf="USD/kg")=>`<label class="fld"><span>${lab} <span class="mini">(${suf})</span></span>
+    <input type="number" step="${step}" value="${Q[k]}" onchange="Q['${k}']=parseFloat(this.value)||0;VIEWS.quote()"></label>`;
+  let html=`
+  <div class="cards grid-2">
+    <div class="card">
+      <h3>Estructura de costos (por kg)</h3>
+      <div class="ch-sub">Edita cualquier valor · el margen se recalcula al instante</div>
+      <div class="row2">${fld("materiaPrima","Materia prima")}${fld("transformacion","Transformación / tostión")}</div>
+      <div class="row2">${fld("merma","Merma de peso","0.1","%")}${fld("empaque","Empaque")}</div>
+      <div class="row2">${fld("etiquetado","Etiquetado")}${fld("almacenamiento","Almacenamiento")}</div>
+      <div class="row2">${fld("transpInterno","Transporte interno")}${fld("fleteIntl","Flete internacional")}</div>
+      <div class="row2">${fld("seguro","Seguro")}${fld("documentacion","Gestión documental")}</div>
+      <div class="row2">${fld("arancelPct","Arancel destino","0.1","% s/precio")}${fld("distribucion","Distribución")}</div>
+      <div class="row2">${fld("comisionPct","Comisión","0.1","% s/precio")}${fld("precioVenta","Precio de venta")}</div>
+      ${fld("kg","Volumen de la operación","1","kg")}
+    </div>
+    <div>
+      <div class="card">
+        <h3>Resultado de la cotización</h3>
+        <div class="ch-sub">Precio de venta ${money2(Q.precioVenta)}/kg · ${Q.kg.toLocaleString()} kg ${flags([["calc","CALCULADO"]])}</div>
+        <div class="cards grid-2" style="margin-top:6px">
+          <div class="kpi"><div class="lab">Margen bruto</div><div class="val" style="color:${scoreColor(r.mBrutoPct)}">${r.mBrutoPct.toFixed(1)}%</div><div class="mini">${money2(r.mBruto)}/kg</div></div>
+          <div class="kpi"><div class="lab">Margen contribución</div><div class="val" style="color:${scoreColor(r.mContribPct)}">${r.mContribPct.toFixed(1)}%</div><div class="mini">${money2(r.mContrib)}/kg</div></div>
+          <div class="kpi"><div class="lab">Ingresos totales</div><div class="val" style="font-size:20px">${money(r.ingresos)}</div></div>
+          <div class="kpi"><div class="lab">Utilidad operación</div><div class="val" style="font-size:20px;color:${r.utilidad>0?'var(--ok)':'var(--bad)'}">${money(r.utilidad)}</div></div>
+        </div>
+        <div class="mini" style="margin-top:8px">Capital requerido (costo directo): <b>${money(r.capital)}</b></div>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <h3>Desglose del costo unitario</h3>
+        ${[["Materia prima",r.unit.materiaPrima],["Transformación",r.unit.transformacion],["Merma",r.unit.merma],
+           ["Empaque",r.unit.empaque],["Etiquetado",r.unit.etiquetado],["Almacenamiento",r.unit.almacenamiento],
+           ["Transp. interno",r.unit.transpInterno],["Flete intl.",r.unit.fleteIntl],["Seguro",r.unit.seguro],
+           ["Documentación",r.unit.documentacion],["Arancel",r.unit.arancel],["Distribución",r.unit.distribucion],
+           ["Comisión",r.unit.comision]].map(x=>{const pct=x[1]/r.totalCost*100;
+           return `<div style="display:flex;align-items:center;gap:8px;margin:5px 0;font-size:12.5px">
+             <span style="width:110px">${x[0]}</span>
+             <span class="bar" style="flex:1"><i style="width:${pct}%;background:var(--green)"></i></span>
+             <b style="width:60px;text-align:right">${money2(x[1])}</b></div>`}).join("")}
+        <div class="divider"></div>
+        <div style="display:flex;justify-content:space-between;font-weight:700"><span>Costo total / kg</span><span>${money2(r.totalCost)}</span></div>
+      </div>
+    </div>
+  </div>
+  ${greenVsRoasted()}`;
+  $("#view").innerHTML=html;
+};
+function greenVsRoasted(){
+  // Comparador verde vs tostado sobre el mismo origen base
+  const base=7.10;
+  const verde=quote({...Q,materiaPrima:base,transformacion:0,merma:0,empaque:0.45,precioVenta:9.9,fleteIntl:0.70,comisionPct:4});
+  const tostadoGrano=quote({...Q,materiaPrima:base,transformacion:1.30,merma:16,empaque:0.65,precioVenta:14.2,comisionPct:5});
+  const tostadoMolido=quote({...Q,materiaPrima:base,transformacion:1.55,merma:16,empaque:0.80,etiquetado:0.30,precioVenta:11.8,comisionPct:6});
+  const rows=[["Verde (saco)",verde],["Tostado en grano",tostadoGrano],["Tostado y molido",tostadoMolido]];
+  const best=rows.slice().sort((a,b)=>b[1].mContribPct-a[1].mContribPct)[0];
+  return `<div class="card" style="margin-top:14px">
+    <h3>Comparador estratégico: café verde vs. tostado</h3>
+    <div class="ch-sub">Mismo origen base (${money2(base)}/kg). La herramienta <b>no</b> asume que tostar es más rentable: lo decide el margen.</div>
+    <table><thead><tr><th>Alternativa</th><th class="right">Precio venta</th><th class="right">Merma</th><th class="right">Costo total</th><th class="right">Margen contrib.</th><th></th></tr></thead>
+    <tbody>${rows.map(x=>`<tr${x[0]===best[0]?' style="background:#e7f1ec"':''}>
+      <td><b>${x[0]}</b></td><td class="right">${money2(x[1].ingresos/Q.kg)}</td>
+      <td class="right">${x[0].includes("Verde")?"0%":"16%"}</td>
+      <td class="right">${money2(x[1].totalCost)}</td>
+      <td class="right"><b style="color:${scoreColor(x[1].mContribPct)}">${x[1].mContribPct.toFixed(1)}%</b></td>
+      <td>${x[0]===best[0]?'<span class="pill g">mejor margen %</span>':""}</td></tr>`).join("")}</tbody></table>
+    <div class="note" style="margin-top:10px"><span class="i">💡</span><div>En este escenario DEMO, <b>${best[0]}</b> ofrece el mejor margen de contribución. Cambia los supuestos arriba y la conclusión puede invertirse — por eso el comparador no fija una respuesta única.</div></div>
+  </div>`;
+}
+
+/* ---- FEASIBILITY ---- */
+let FS={puerto:"Buenaventura",transporte:"Marítimo FCL",incoterm:"FOB",volKg:1200};
+VIEWS.feasibility=function(){
+  // escenarios ilustrativos (datos ingresados/estimados, no tarifas reales de navieras)
+  const scen=[
+    {puerto:"Buenaventura",modo:"Marítimo FCL",dias:26,costoKg:1.05,riesgo:"Bajo"},
+    {puerto:"Cartagena",modo:"Marítimo FCL",dias:22,costoKg:1.18,riesgo:"Bajo"},
+    {puerto:"Cartagena",modo:"Marítimo LCL",dias:24,costoKg:1.46,riesgo:"Medio"},
+    {puerto:"Bogotá (ELDR)",modo:"Aéreo",dias:5,costoKg:4.20,riesgo:"Bajo"},
+  ];
+  const withCalc=scen.map(s=>({...s,total:s.costoKg*FS.volKg,
+    bal:Math.round(100 - s.dias*1.4 - s.costoKg*8 - (s.riesgo==="Medio"?10:0))}));
+  const cheapest=withCalc.slice().sort((a,b)=>a.costoKg-b.costoKg)[0];
+  const fastest=withCalc.slice().sort((a,b)=>a.dias-b.dias)[0];
+  const balanced=withCalc.slice().sort((a,b)=>b.bal-a.bal)[0];
+  let html=`
+  <div class="note"><span class="i">⚠️</span><div>Los costos, tiempos y rutas de abajo son <b>ingresados por el usuario / estimados</b>, claramente rotulados. No son tarifas confirmadas de navieras. En producción se reemplazan por cotizaciones reales vía conectores logísticos o carga manual.</div></div>
+  <div class="card" style="margin-top:14px">
+    <label class="fld" style="max-width:200px"><span>Volumen a exportar (kg)</span>
+      <input type="number" value="${FS.volKg}" onchange="FS.volKg=parseInt(this.value)||0;VIEWS.feasibility()"></label>
+    <h3>Simulador de escenarios de exportación</h3>
+    <div class="ch-sub">Destino: Estados Unidos · producto: Huila Especialidad ${flags([["est","ESTIMADO"]])}</div>
+    <table><thead><tr><th>Puerto / salida</th><th>Modalidad</th><th class="right">Tiempo</th><th class="right">Costo/kg</th><th class="right">Costo total</th><th>Riesgo</th><th>Balance</th></tr></thead>
+    <tbody>${withCalc.map(s=>`<tr>
+      <td><b>${s.puerto}</b></td><td>${s.modo}</td><td class="right">${s.dias} días</td>
+      <td class="right">${money2(s.costoKg)}</td><td class="right">${money(s.total)}</td>
+      <td>${s.riesgo==="Bajo"?'<span class="pill g">Bajo</span>':'<span class="pill a">Medio</span>'}</td>
+      <td style="width:120px">${barHtml(Math.max(0,s.bal))}</td></tr>`).join("")}</tbody></table>
+  </div>
+  <div class="cards grid-3" style="margin-top:14px">
+    <div class="card"><div class="lab mini">💰 Menor costo</div><h3>${cheapest.puerto}</h3><div class="ch-sub">${cheapest.modo}</div><div class="big-num" style="font-size:22px">${money2(cheapest.costoKg)}<span class="mini">/kg</span></div><div class="mini">${cheapest.dias} días · ${money(cheapest.total)} total</div></div>
+    <div class="card"><div class="lab mini">⚡ Menor tiempo</div><h3>${fastest.puerto}</h3><div class="ch-sub">${fastest.modo}</div><div class="big-num" style="font-size:22px">${fastest.dias}<span class="mini"> días</span></div><div class="mini">${money2(fastest.costoKg)}/kg · ${money(fastest.total)}</div></div>
+    <div class="card" style="border-color:var(--green)"><div class="lab mini">⚖ Mejor equilibrio</div><h3>${balanced.puerto}</h3><div class="ch-sub">${balanced.modo}</div><div class="big-num" style="font-size:22px">${balanced.bal}<span class="mini"> balance</span></div><div class="mini">tiempo + costo + riesgo</div></div>
+  </div>
+  <div class="card" style="margin-top:14px">
+    <h3>Checklist de requisitos de exportación</h3>
+    <div class="ch-sub">Documentos y condiciones para EE.UU. ${flags([["demo","DEMO"]])} — en producción desde fuentes regulatorias oficiales</div>
+    ${["Registro como exportador","Certificado de origen","Factura comercial y packing list","Registro FDA (Food Facility)","Prior Notice de importación","Certificado fitosanitario ICA","BL / documento de transporte","Póliza de seguro de carga"].map(d=>`<div style="display:flex;gap:9px;align-items:center;padding:5px 0;border-bottom:1px solid var(--line)"><span>☐</span><span style="font-size:13px">${d}</span></div>`).join("")}
+  </div>`;
+  $("#view").innerHTML=html;
+};
+
+/* ---- GIS ---- */
+VIEWS.gis=function(){
+  const g=DB.geo;
+  const node=(p,color,r=7)=>`<circle cx="${p.x}" cy="${p.y}" r="${r}" fill="${color}" stroke="#fff" stroke-width="2"/>
+    <text x="${p.x+10}" y="${p.y+4}" font-size="11" fill="#1c2420">${p.n}</text>`;
+  // conexiones ilustrativas puerto->destino
+  const link=(a,b)=>`<path d="M${a.x} ${a.y} Q ${(a.x+b.x)/2} ${Math.min(a.y,b.y)-40} ${b.x} ${b.y}" fill="none" stroke="#2e8b63" stroke-width="1.5" stroke-dasharray="4 4" opacity=".55"/>`;
+  let html=`
+  <div class="note"><span class="i">ℹ️</span><div>Mapa <b>esquemático</b> (no cartografía georreferenciada). Representa relaciones origen → puerto → destino. No muestra rutas marítimas como servicios confirmados. En producción: PostGIS + MapLibre con capas reales y cálculo de distancias.</div></div>
+  <div class="card" style="margin-top:14px">
+    <h3>Red de orígenes, puertos y destinos</h3>
+    <div class="ch-sub">4 orígenes · 3 puertos · 4 mercados activos</div>
+    <div class="mapwrap"><svg viewBox="0 0 780 360" width="100%" style="display:block">
+      <rect width="780" height="360" fill="#eef2ef"/>
+      <text x="90" y="30" font-size="12" font-weight="700" fill="#5f6b64">COLOMBIA</text>
+      <text x="560" y="30" font-size="12" font-weight="700" fill="#5f6b64">MERCADOS DESTINO</text>
+      ${g.ports.map(pt=>g.dest.map(d=>link(pt,d)).join("")).join("")}
+      ${g.origins.map(o=>g.ports.map(pt=>`<line x1="${o.x}" y1="${o.y}" x2="${pt.x}" y2="${pt.y}" stroke="#c6882f" stroke-width="1.2" opacity=".4"/>`).join("")).join("")}
+      ${g.origins.map(o=>node(o,"#c6882f",6)).join("")}
+      ${g.ports.map(p=>node(p,"#1f6b4a",8)).join("")}
+      ${g.dest.map(d=>node(d,"#2b6b8c",8)).join("")}
+    </svg></div>
+    <div class="legend">
+      <span><span class="dot" style="background:#c6882f"></span> Orígenes (fincas/regiones)</span>
+      <span><span class="dot" style="background:#1f6b4a"></span> Puertos de salida</span>
+      <span><span class="dot" style="background:#2b6b8c"></span> Mercados destino</span>
+      <span><b>- - -</b> Conexión ilustrativa (no confirmada)</span>
+    </div>
+  </div>
+  <div class="cards grid-3" style="margin-top:14px">
+    ${[["Buenaventura","Pacífico · 60% del café","Huila, Nariño, Tolima"],["Cartagena","Caribe · menor tiempo a Europa","Antioquia, Tolima"],["Sta. Marta","Caribe · granel","Zona norte"]].map(p=>`
+    <div class="card"><h3>${p[0]}</h3><div class="ch-sub">${p[1]}</div><div class="mini">Orígenes conectados: ${p[2]}</div></div>`).join("")}
+  </div>`;
+  $("#view").innerHTML=html;
+};
+
+/* ---- TIME TO MARKET ---- */
+VIEWS.ttm=function(){
+  const closed=DB.opps.filter(o=>oppMetrics(o).total!=null);
+  const avg=(f)=>{const v=DB.opps.map(f).filter(x=>x!=null);return v.length?Math.round(v.reduce((a,b)=>a+b,0)/v.length):"—";};
+  const kpis=[
+    ["Time to First Opportunity",avg(o=>oppMetrics(o).toFirstOpp),"publicado → 1ª oportunidad"],
+    ["Time to Qualified Buyer",avg(o=>oppMetrics(o).toQBuyer),"oportunidad → comprador calificado"],
+    ["Time to First Contact",avg(o=>oppMetrics(o).toContact),"calificado → contacto"],
+    ["Time to First Response",avg(o=>oppMetrics(o).toResp),"contacto → respuesta"],
+    ["Time to First Quote",avg(o=>oppMetrics(o).toQuote),"respuesta → cotización"],
+    ["Total Time to Market",avg(o=>oppMetrics(o).total),"disponible → pedido"],
+  ];
+  // bottleneck: etapa con más días promedio
+  const stageAvg=[
+    ["1ª oportunidad",avg(o=>oppMetrics(o).toFirstOpp)],
+    ["Comprador calificado",avg(o=>oppMetrics(o).toQBuyer)],
+    ["Primer contacto",avg(o=>oppMetrics(o).toContact)],
+    ["Respuesta",avg(o=>oppMetrics(o).toResp)],
+    ["Cotización",avg(o=>oppMetrics(o).toQuote)],
+  ].filter(x=>typeof x[1]==="number");
+  const bottleneck=stageAvg.slice().sort((a,b)=>b[1]-a[1])[0];
+  const maxd=Math.max(...stageAvg.map(x=>x[1]),1);
+  const stale=DB.opps.filter(o=>staleDays(o)>=7);
+  let html=`
+  <div class="cards grid-3">${kpis.map(k=>`
+    <div class="kpi"><div class="lab">${k[0]}</div><div class="val">${k[1]}<span class="mini"> días</span></div><div class="mini">${k[2]}</div></div>`).join("")}
+  </div>
+  <div class="cards grid-2" style="margin-top:14px">
+    <div class="card">
+      <h3>¿Dónde se pierde el tiempo?</h3>
+      <div class="ch-sub">Promedio de días por etapa (DEMO)</div>
+      ${stageAvg.map(s=>`<div style="margin:9px 0">
+        <div style="display:flex;justify-content:space-between;font-size:12.5px"><span>${s[0]}</span><b>${s[1]} días</b></div>
+        <div class="bar" style="width:100%;height:9px;margin-top:4px"><i style="width:${s[1]/maxd*100}%;background:${s[0]===bottleneck[0]?'var(--terra)':'var(--green)'}"></i></div>
+      </div>`).join("")}
+      <div class="note" style="margin-top:10px"><span class="i">🎯</span><div>Cuello de botella detectado: <b>${bottleneck[0]}</b> (${bottleneck[1]} días promedio). Es la etapa a optimizar para reducir el tiempo total de comercialización.</div></div>
+    </div>
+    <div class="card">
+      <h3>Oportunidades estancadas</h3>
+      <div class="ch-sub">Umbral configurable · actualmente ≥7 días sin actividad</div>
+      ${stale.map(o=>{const b=buyerById(o.buyer);return `<div class="note" style="margin-bottom:9px"><span class="i">⏱</span>
+        <div><b>${o.id} · ${b.name}</b>: ${staleDays(o)} días sin actividad en «${o.stage}»${o.nextTask?"":", sin próxima tarea"}.</div></div>`}).join("")||'<div class="mini">Sin oportunidades estancadas.</div>'}
+      <div class="divider"></div>
+      <div class="mini">La distinción clave: el <b>tiempo de búsqueda/negociación</b> (lo que mide esta plataforma) <b>no</b> es el tiempo de tránsito internacional. Son métricas separadas.</div>
+    </div>
+  </div>`;
+  $("#view").innerHTML=html;
+};
+
+/* ---- COPILOT ---- */
+const COPILOT_Q=[
+  "¿Qué mercados debería priorizar?",
+  "¿Qué compradores son más compatibles con mi Huila especialidad?",
+  "¿Qué oportunidades están estancadas?",
+  "¿Conviene exportar verde o tostado?",
+  "¿Dónde pierdo más tiempo en el ciclo comercial?"
+];
+let CHAT=[{r:"a",t:"Soy tu analista comercial. Trabajo <b>solo</b> con los datos registrados en tu cuenta (DEMO) y con reglas transparentes. No invento compradores, precios ni estadísticas; cuando falta información, lo digo. ¿En qué te ayudo?",prov:"Fuente: datos internos DEMO · motor de reglas v0"}];
+VIEWS.copilot=function(){
+  let html=`
+  <div class="card">
+    <div class="chat" id="chat">${CHAT.map(m=>`<div class="msg ${m.r}">${m.t}${m.prov?`<div class="prov">${m.prov}</div>`:""}</div>`).join("")}</div>
+    <div class="suggest" style="margin-top:14px">${COPILOT_Q.map(q=>`<button onclick="ask(\`${q}\`)">${q}</button>`).join("")}</div>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <input id="chatInput" placeholder="Escribe una pregunta sobre tu negocio…" onkeydown="if(event.key==='Enter')ask(this.value)">
+      <button class="btn" onclick="ask($('#chatInput').value)">Enviar</button>
+    </div>
+  </div>
+  <div class="note" style="margin-top:14px"><span class="i">ℹ️</span><div>Este copiloto es un <b>motor de reglas</b> sobre tus datos, no un modelo que decide por ti. Diferencia hechos, cálculos y recomendaciones, y cita la fuente. No ejecuta acciones comerciales sin tu autorización.</div></div>`;
+  $("#view").innerHTML=html;
+};
+function ask(q){
+  if(!q||!q.trim())return;
+  CHAT.push({r:"u",t:q});
+  CHAT.push(answer(q));
+  VIEWS.copilot();
+  setTimeout(()=>{const c=$("#chat");if(c)c.scrollTop=c.scrollHeight;},10);
+}
+function answer(q){
+  const l=q.toLowerCase();
+  if(l.includes("mercado")){
+    const top=DB.markets.map(m=>({m,s:marketScore(m)})).sort((a,b)=>b.s-a.s).slice(0,3);
+    return {r:"a",t:`Según el Market Opportunity Score, prioriza: ${top.map((t,i)=>`<b>${i+1}. ${t.m.c}</b> (${t.s}/100)`).join(", ")}. ${top[0].m.c} destaca por tamaño y valor unitario; ${top.find(t=>t.m.growth>=80)?top.find(t=>t.m.growth>=80).m.c+" por crecimiento acelerado.":""}<br><span class="mini">Recomendación, no hecho. Falta confirmar precio FOB reciente y requisitos sanitarios por destino.</span>`,
+      prov:"Fuente: indicadores de mercado DEMO · fórmula MOS · 2026-11-27"};
+  }
+  if(l.includes("comprador")||l.includes("compatible")){
+    const p=prodById("L-001");
+    const r=DB.buyers.map(b=>({b,m:buyerMatch(b,p)})).sort((a,b)=>b.m.score-a.m.score).slice(0,3);
+    return {r:"a",t:`Para <b>${p.name}</b>, los más compatibles: ${r.map(x=>`<b>${x.b.name}</b> (${x.m.score}/100, ${x.b.status.toLowerCase()})`).join(", ")}. El primero coincide en tipo de producto, segmento y rango de precio. <br><span class="mini">${r.some(x=>!x.b.verified)?"Ojo: algunos son potenciales no verificados — falta validar contacto y volumen.":""}</span>`,
+      prov:"Fuente: Buyer Match Score sobre compradores DEMO"};
+  }
+  if(l.includes("estancad")||l.includes("seguimiento")||l.includes("tiempo")&&l.includes("cicl")===false&&l.includes("pierd")===false){
+    const stale=DB.opps.filter(o=>staleDays(o)>=7);
+    return {r:"a",t:stale.length?`Hay <b>${stale.length}</b> oportunidad(es) estancada(s): ${stale.map(o=>{const b=buyerById(o.buyer);return `<b>${o.id}</b> (${b.name}, ${staleDays(o)} días, «${o.stage}»)`}).join("; ")}. Recomiendo programar seguimiento inmediato en la de mayor valor.`:"No hay oportunidades estancadas ahora mismo.",
+      prov:"Fuente: pipeline DEMO · regla: ≥7 días sin actividad"};
+  }
+  if(l.includes("verde")||l.includes("tostado")){
+    return {r:"a",t:`Depende de los costos, no hay respuesta fija. En el escenario base DEMO, el <b>tostado en grano</b> da mejor margen de contribución (~${quote({...Q,materiaPrima:7.1,transformacion:1.3,merma:16,precioVenta:14.2}).mContribPct.toFixed(0)}%) que el verde, <b>pero</b> exige más capital y asume 16% de merma. Si el precio de venta del tostado baja o sube la merma, el verde puede ganar. Usa el comparador en «Cotizador».`,
+      prov:"Cálculo: motor de costos · supuestos editables por ti"};
+  }
+  if(l.includes("pierd")||l.includes("cuello")||l.includes("cicl")){
+    return {r:"a",t:`El cuello de botella está en la etapa con más días promedio del ciclo. Revisa «Time to Market»: ahí el motor marca en rojo la etapa crítica y lista las oportunidades sin próxima tarea, que son la causa principal de retraso evitable.`,
+      prov:"Fuente: eventos de ciclo DEMO · Time to Market"};
+  }
+  return {r:"a",t:`No tengo información suficiente registrada para responder eso con certeza. Puedo ayudarte con: priorización de mercados, compatibilidad de compradores, oportunidades estancadas, comparador verde/tostado o cuellos de botella del ciclo. ¿Reformulamos?`,
+    prov:"El asistente reconoce cuándo no hay datos suficientes."};
+}
+
+/* ---- DATA CENTER ---- */
+VIEWS.data=function(){
+  const sources=[
+    ["UN Comtrade","Importaciones/exportaciones","API","No conectada","Media","Oficial"],
+    ["WITS / Banco Mundial","Aranceles y comercio","API","No conectada","Alta","Oficial"],
+    ["Fed. Nacional de Cafeteros","Precios y producción","Web/archivo","No conectada","Alta","Oficial"],
+    ["ProColombia","Requisitos de mercado","Web","No conectada","Media","Oficial"],
+    ["Tasa de cambio","TRM / USD","API","No conectada","Alta","Oficial"],
+    ["Carga manual (tu empresa)","Productos, compradores, costos","CSV/Excel","Activa","—","Empresa"],
+    ["Datos de demostración","Todo el entorno actual","Interno","Activa","—","Demo"],
+  ];
+  let html=`
+  <div class="note"><span class="i">ℹ️</span><div>Arquitectura de conectores desacoplados. Cada fuente declara método, frecuencia, estado y confiabilidad. Mientras no haya API conectada, se importa por CSV/Excel con trazabilidad. <b>Nunca</b> se presenta un dato demo como real.</div></div>
+  <div class="card" style="margin-top:14px">
+    <h3>Fuentes de datos e integraciones</h3>
+    <table><thead><tr><th>Fuente</th><th>Tipo de información</th><th>Método</th><th>Estado</th><th>Confiabilidad</th><th>Clasificación</th></tr></thead>
+    <tbody>${sources.map(s=>`<tr><td><b>${s[0]}</b></td><td>${s[1]}</td><td>${s[2]}</td>
+      <td>${s[3]==="Activa"?'<span class="pill g">Activa</span>':'<span class="pill n">No conectada</span>'}</td>
+      <td>${s[4]}</td><td>${classPill(s[5])}</td></tr>`).join("")}</tbody></table>
+  </div>
+  <div class="card" style="margin-top:14px">
+    <h3>Clasificación de todo dato en la plataforma</h3>
+    <div class="legend" style="font-size:12.5px;gap:16px">
+      <span>${flag("real","REAL")} verificado de fuente</span>
+      <span>${flag("demo","DEMO")} demostración</span>
+      <span>${flag("calc","CALCULADO")} derivado por la plataforma</span>
+      <span>${flag("est","ESTIMADO")} supuesto del usuario</span>
+    </div>
+    <div class="mini" style="margin-top:10px">Cada cifra del producto lleva su etiqueta de origen para que nunca confundas un dato real con una estimación o una demostración.</div>
+  </div>`;
+  $("#view").innerHTML=html;
+};
+function classPill(c){const m={"Oficial":"b","Empresa":"g","Demo":"a"};return `<span class="pill ${m[c]||'n'}">${c}</span>`;}
+function flag(c,t){return `<span class="flag ${c}">${t}</span>`;}
+
+/* ---------- BOOT ---------- */
+renderNav();
+go("home");
+</script>
+</body>
+</html>
