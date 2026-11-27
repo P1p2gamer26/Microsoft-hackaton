@@ -99,9 +99,18 @@ Criterio de éxito: respuestas en español, basadas en los archivos del repo, co
 
 `GitHub (rama + .gitignore)` → `Ollama (instalar + modelo)` → `Agente (server + knowledge + tools)` → `HTML (panel + fetch)` → `start.ps1 + pruebas` → `push + PR`.
 
-## 9. Decisiones que confirma el usuario antes de ejecutar
+## 9. Decisiones confirmadas por el usuario
 
-1. ¿El repo de GitHub debe seguir público o se crea una versión privada?
-2. ¿Modelo 3B rápido en CPU (recomendado) o 8B más calidad?
-3. ¿El agente solo responde preguntas del proyecto o también ejecuta cálculos/simulaciones?
-4. ¿Quieres que se integre en el HTML actual o prefieres primero una interfaz de chat independiente?
+1. Repo de GitHub: **se mantiene público**.
+2. Modelo: **qwen2.5:3b-instruct** en CPU (rápido).
+3. Alcance: **responder con citas y ejecutar cálculos/simulaciones** simples.
+4. Interfaz: **panel integrado en `coffee-value-bridge.html`** (vista "Coffee Intelligence Copilot"), conservando el motor de reglas como respaldo.
+
+## 10. Progreso
+
+- [x] Rama `feature/agente-local-ollama` creada y autenticación GitHub verificada.
+- [x] Backend del agente, índice de documentos, herramientas, prompt y script de arranque.
+- [x] Integración del copiloto web con modo IA local / reglas DEMO.
+- [x] Verificación de sintaxis Python y JavaScript; endpoints `/api/health` y `/api/sources` responden.
+- [ ] Instalación de Ollama y descarga del modelo.
+- [ ] Prueba de las 5 preguntas y push/PR a GitHub.
