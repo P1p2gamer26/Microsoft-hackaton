@@ -3,6 +3,17 @@ package com.asoexport.cvb.config;
 import com.asoexport.cvb.common.DataProvenance;
 import com.asoexport.cvb.domain.*;
 import com.asoexport.cvb.repository.*;
+import com.asoexport.cvb.trazabilidad.domain.Canal;
+import com.asoexport.cvb.trazabilidad.domain.EstadoEudr;
+import com.asoexport.cvb.trazabilidad.domain.Etapa;
+import com.asoexport.cvb.trazabilidad.domain.EventoLote;
+import com.asoexport.cvb.trazabilidad.domain.Finca;
+import com.asoexport.cvb.trazabilidad.domain.LoteTrazable;
+import com.asoexport.cvb.trazabilidad.repository.EventoLoteRepository;
+import com.asoexport.cvb.trazabilidad.repository.FincaRepository;
+import com.asoexport.cvb.trazabilidad.repository.LoteTrazableRepository;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -11,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
@@ -54,6 +66,9 @@ public class DataInitializer implements CommandLineRunner {
     private final TimeEventRepository timeEventRepo;
     private final NotificationRepository notifRepo;
     private final DataSourceConfigRepository dsRepo;
+    private final FincaRepository trazaFincaRepo;
+    private final LoteTrazableRepository trazaLoteRepo;
+    private final EventoLoteRepository trazaEventoRepo;
     private final PasswordEncoder passwordEncoder;
 
     public DataInitializer(
@@ -69,7 +84,9 @@ public class DataInitializer implements CommandLineRunner {
             RegulatoryRequirementRepository regRepo, ExportDocumentRepository docRepo, ExchangeRateRepository fxRepo,
             ProductionCostRepository prodCostRepo, ExportCostRepository exportCostRepo,
             TimeEventRepository timeEventRepo, NotificationRepository notifRepo,
-            DataSourceConfigRepository dsRepo, PasswordEncoder passwordEncoder
+            DataSourceConfigRepository dsRepo, FincaRepository trazaFincaRepo,
+            LoteTrazableRepository trazaLoteRepo, EventoLoteRepository trazaEventoRepo,
+            PasswordEncoder passwordEncoder
     ) {
         this.roleRepo = roleRepo; this.permRepo = permRepo; this.companyRepo = companyRepo;
         this.userRepo = userRepo; this.countryRepo = countryRepo; this.portRepo = portRepo;
@@ -82,13 +99,17 @@ public class DataInitializer implements CommandLineRunner {
         this.shipmentRepo = shipmentRepo; this.regRepo = regRepo; this.docRepo = docRepo;
         this.fxRepo = fxRepo; this.prodCostRepo = prodCostRepo; this.exportCostRepo = exportCostRepo;
         this.timeEventRepo = timeEventRepo; this.notifRepo = notifRepo; this.dsRepo = dsRepo;
-        this.passwordEncoder = passwordEncoder;
+        this.trazaFincaRepo = trazaFincaRepo; this.trazaLoteRepo = trazaLoteRepo;
+        this.trazaEventoRepo = trazaEventoRepo; this.passwordEncoder = passwordEncoder;
     }
 
     @Override
     @Transactional
     public void run(String... args) {
-        if (roleRepo.count() > 0) return;
+        if (roleRepo.count() > 0) {
+            companyRepo.findByTaxId("900111222-1").ifPresent(c -> seedTrazabilidad(c.getId()));
+            return;
+        }
 
         // 1. Permissions
         List<String[]> permDefs = List.of(
@@ -111,6 +132,10 @@ public class DataInitializer implements CommandLineRunner {
                 new String[]{"TTM_VIEW", "TTM", "Consultar inteligencia Time to Market"},
                 new String[]{"FINANCE_VIEW", "FINANCE", "Consultar inteligencia financiera y rentabilidad"},
                 new String[]{"REPORTS_EXPORT", "REPORTS", "Descargar reportes Excel y PDF"},
+                new String[]{"TRAZA_VIEW", "TRAZA", "Consultar trazabilidad de finca a puerto"},
+                new String[]{"TRAZA_EDIT", "TRAZA", "Registrar lotes y eventos de trazabilidad"},
+                new String[]{"TRAZA_SYNC", "TRAZA", "Sincronizar registros offline de trazabilidad"},
+                new String[]{"EUDR_VIEW", "EUDR", "Consultar resumen y declaraciones EUDR"},
                 new String[]{"ADMIN_MANAGE", "ADMIN", "Administrar usuarios, roles y empresas"}
         );
         Map<String, Permission> pMap = new HashMap<>();
@@ -124,18 +149,20 @@ public class DataInitializer implements CommandLineRunner {
                 pick(pMap, "DASHBOARD_VIEW", "MARKETS_VIEW", "MARKETS_EDIT", "BUYERS_VIEW", "BUYERS_EDIT",
                         "CRM_VIEW", "CRM_EDIT", "INVENTORY_VIEW", "INVENTORY_EDIT", "COMPARATOR_USE",
                         "LOGISTICS_VIEW", "LOGISTICS_EDIT", "COMPLIANCE_VIEW", "COMPLIANCE_EDIT",
-                        "ORDERS_VIEW", "ORDERS_EDIT", "TTM_VIEW", "FINANCE_VIEW", "REPORTS_EXPORT"));
+                        "ORDERS_VIEW", "ORDERS_EDIT", "TTM_VIEW", "FINANCE_VIEW", "REPORTS_EXPORT",
+                        "TRAZA_VIEW", "TRAZA_EDIT", "TRAZA_SYNC", "EUDR_VIEW"));
         Role rComm = createRole("COMMERCIAL_ANALYST", "Analista Comercial", "Gestión de mercados, compradores y pipeline CRM",
                 pick(pMap, "DASHBOARD_VIEW", "MARKETS_VIEW", "MARKETS_EDIT", "BUYERS_VIEW", "BUYERS_EDIT",
                         "CRM_VIEW", "CRM_EDIT", "INVENTORY_VIEW", "COMPARATOR_USE", "TTM_VIEW", "REPORTS_EXPORT"));
         Role rLog = createRole("LOGISTICS_ANALYST", "Analista Logístico", "Gestión de rutas GIS, cotizaciones, despachos y pedidos",
                 pick(pMap, "DASHBOARD_VIEW", "LOGISTICS_VIEW", "LOGISTICS_EDIT", "ORDERS_VIEW", "ORDERS_EDIT",
-                        "INVENTORY_VIEW", "TTM_VIEW", "REPORTS_EXPORT"));
+                        "INVENTORY_VIEW", "TTM_VIEW", "REPORTS_EXPORT", "TRAZA_VIEW", "TRAZA_EDIT", "TRAZA_SYNC"));
         Role rComp = createRole("COMPLIANCE_ANALYST", "Analista de Cumplimiento", "Gestión documental, requisitos sanitarios y validaciones",
-                pick(pMap, "DASHBOARD_VIEW", "COMPLIANCE_VIEW", "COMPLIANCE_EDIT", "ORDERS_VIEW", "MARKETS_VIEW", "REPORTS_EXPORT"));
+                pick(pMap, "DASHBOARD_VIEW", "COMPLIANCE_VIEW", "COMPLIANCE_EDIT", "ORDERS_VIEW", "MARKETS_VIEW",
+                        "REPORTS_EXPORT", "EUDR_VIEW", "TRAZA_VIEW"));
         Role rView = createRole("VIEWER", "Visualizador", "Consulta de solo lectura según empresa autorizada",
                 pick(pMap, "DASHBOARD_VIEW", "MARKETS_VIEW", "BUYERS_VIEW", "CRM_VIEW", "INVENTORY_VIEW",
-                        "LOGISTICS_VIEW", "COMPLIANCE_VIEW", "ORDERS_VIEW", "TTM_VIEW", "FINANCE_VIEW"));
+                        "LOGISTICS_VIEW", "COMPLIANCE_VIEW", "ORDERS_VIEW", "TTM_VIEW", "FINANCE_VIEW", "TRAZA_VIEW"));
 
         // 3. Companies (ASOEXPORT + 2 Fictional DEMO Exporters for multi-tenant isolation testing)
         Company cAso = saveCompany("900000001-0", "ASOEXPORT Colombia (Demo Plataforma)", "Asociación Nacional de Exportadores de Café - Entorno Demo", "ASSOCIATION", "Bogotá", "info-demo@asoexport-demo.example", DataProvenance.SIMULATED);
@@ -149,8 +176,10 @@ public class DataInitializer implements CommandLineRunner {
         AppUser uExp2 = saveUser("exportador@sierraverde-demo.co", hash, "Laura Restrepo (Gerente Sierra Verde DEMO)", rExpAdmin, cSierra);
         saveUser("comercial@cordillera-demo.co", hash, "Valentina Díaz (Analista Comercial DEMO)", rComm, cAndes);
         saveUser("logistica@cordillera-demo.co", hash, "Santiago Ruiz (Analista Logístico DEMO)", rLog, cAndes);
-        saveUser("cumplimiento@cordillera-demo.co", hash, "Juliana Vargas (Analista Cumplimiento DEMO)", rComp, cAndes);
+        saveUser("cumplimiento@cordillera-demo.co", hash, "Laura Restrepo (Analista Cumplimiento DEMO)", rComp, cAndes);
         saveUser("visualizador@cordillera-demo.co", hash, "Mateo Castro (Visualizador DEMO)", rView, cAndes);
+        saveUser("acopio@cordillera-demo.co", hash, "Hernán Muñoz (Acopio DEMO)", rLog, cAndes);
+        saveUser("comprador@nordkaffee-demo.co", hash, "Anke Vogel (Comprador DEMO)", rView, cAndes);
 
         // 5. Data Sources Registry
         seedDataSource("UN_COMTRADE", "UN Comtrade API", "TRADE", "https://comtradeapi.un.org/public/v1", true, "DEMO_FALLBACK", "Requiere UN_COMTRADE_API_KEY; soporta importación CSV.");
@@ -381,6 +410,158 @@ public class DataInitializer implements CommandLineRunner {
         saveNotif(cAndes.getId(), "WARNING", "CRM_STALE", "Cotización sin respuesta hace 11 días", "La oportunidad 'Lanzamiento Espresso Benelux 1.000 kg' con Lowlands Private Label Foods B.V. supera el umbral de 7 días sin respuesta.");
         saveNotif(cAndes.getId(), "WARNING", "ORDER_DELAY", "Despacho retrasado en documentación", "El pedido PED-2026-0103 (Hamburgo) tiene despacho programado vencido y certificado de origen pendiente.");
         saveNotif(cAndes.getId(), "INFO", "TTM_BOTTLENECK", "Cuello de botella detectado en Time to Market", "Las etapas 'Negociación' y 'Transporte Internacional' concentran la mayor demora acumulada.");
+
+        seedTrazabilidad(cAndes.getId());
+    }
+
+    private void seedTrazabilidad(Long companyId) {
+        String[][] fincas = {
+                {"F-HU-001", "La Esperanza", "Rosa Elvira Cuéllar", "Pitalito", "Huila", "1.4", "1650", "Castillo", "CUMPLE", null,
+                        "[[-76.071131,1.851454],[-76.070634,1.85172],[-76.070634,1.852267],[-76.070953,1.852722],[-76.071524,1.852639],[-76.071948,1.852185],[-76.071576,1.851713],[-76.071131,1.851454]]"},
+                {"F-HU-002", "El Mirador", "Jairo Ortiz", "Pitalito", "Huila", "2.1", "1720", "Caturra", "CUMPLE", null,
+                        "[[-76.064781,1.857826],[-76.064827,1.858516],[-76.065487,1.858783],[-76.066084,1.85847],[-76.066314,1.857809],[-76.065838,1.857283],[-76.065169,1.857313],[-76.064781,1.857826]]"},
+                {"F-HU-003", "Buenavista", "Marleny Rojas", "Acevedo", "Huila", "1.1", "1580", "Cenicafé 1", "REVISION", null,
+                        "[[-75.888831,1.804511],[-75.888533,1.804682],[-75.888475,1.805021],[-75.888515,1.805382],[-75.888856,1.805506],[-75.88918,1.805509],[-75.889398,1.805281],[-75.889566,1.804996],[-75.889478,1.804649],[-75.889169,1.804464],[-75.888831,1.804511]]"},
+                {"F-HU-004", "Los Naranjos", "Edilberto Perdomo", "San Agustín", "Huila", "1.8", "1800", "Castillo", "RIESGO",
+                        "Alerta GLAD: pérdida de cobertura arbórea de 0,3 ha (ago-2026)",
+                        "[[-76.297973,1.870083],[-76.297851,1.870547],[-76.298017,1.871065],[-76.298585,1.871259],[-76.299149,1.87097],[-76.29917,1.870363],[-76.298876,1.869926],[-76.298379,1.869788],[-76.297973,1.870083]]"},
+                {"F-CA-001", "La Cumbre", "Hernán Muñoz (cooperativa)", "Popayán", "Cauca", "0.8", "1850", "Tabi", "CUMPLE", null,
+                        "[[-76.551649,2.478627],[-76.5516,2.479027],[-76.551673,2.479485],[-76.552143,2.479432],[-76.552472,2.479167],[-76.552403,2.478747],[-76.552061,2.478516],[-76.551649,2.478627]]"},
+                {"F-CA-002", "El Paraíso", "Luz Dary Chicangana", "Inzá", "Cauca", "0.7", "1900", "Caturra", "REVISION", null,
+                        "[[-76.064452,2.552732],[-76.064136,2.552671],[-76.063907,2.552562],[-76.06371,2.552724],[-76.063602,2.552936],[-76.063541,2.553228],[-76.063812,2.553354],[-76.064087,2.553517],[-76.064239,2.553223],[-76.064513,2.553054],[-76.064452,2.552732]]"}
+        };
+        ObjectMapper mapper = new ObjectMapper();
+        Map<String, Finca> fincasGuardadas = new LinkedHashMap<>();
+        for (String[] f : fincas) {
+            Finca finca = trazaFincaRepo.findByCompanyIdAndCodigo(companyId, f[0]).orElseGet(() -> {
+                Finca nueva = new Finca();
+                nueva.setCodigo(f[0]);
+                nueva.setNombre(f[1]);
+                nueva.setProductor(f[2]);
+                nueva.setMunicipio(f[3]);
+                nueva.setDepartamento(f[4]);
+                nueva.setHectareas(Double.valueOf(f[5]));
+                nueva.setAltitud(Integer.valueOf(f[6]));
+                nueva.setVariedad(f[7]);
+                nueva.setPoligonoGeoJson(f[10]);
+                Double[] bbox = bboxPoligono(mapper, f[10]);
+                nueva.setBboxMinLat(bbox[0]);
+                nueva.setBboxMaxLat(bbox[1]);
+                nueva.setBboxMinLng(bbox[2]);
+                nueva.setBboxMaxLng(bbox[3]);
+                nueva.setEstadoEudr(EstadoEudr.valueOf(f[8]));
+                nueva.setAlerta(f[9]);
+                nueva.setProvenance(DataProvenance.SIMULATED);
+                nueva.setCompanyId(companyId);
+                return trazaFincaRepo.save(nueva);
+            });
+            fincasGuardadas.put(f[0], finca);
+        }
+
+        String[][] lotes = {
+                {"LT-2026-0412", "F-HU-001,F-HU-002", "1250", "11.2", "84.5", "Hamburgo, Alemania", "Anke Vogel · Nordkaffee Rösterei", "CUMPLE"},
+                {"LT-2026-0419", "F-HU-003,F-HU-004", "980", "12.4", "82", "Amberes, Bélgica", "Pendiente", "RIESGO"},
+                {"LT-2026-0423", "F-CA-001,F-CA-002", "640", "10.8", "86", "Nueva York, EE. UU.", "Blue Hill Roasters", "REVISION"}
+        };
+        Map<String, LoteTrazable> lotesGuardados = new LinkedHashMap<>();
+        for (String[] l : lotes) {
+            LoteTrazable lote = trazaLoteRepo.findByCompanyIdAndCodigo(companyId, l[0]).orElseGet(() -> {
+                Set<Finca> origen = new LinkedHashSet<>();
+                for (String codigoFinca : l[1].split(",")) {
+                    Finca finca = fincasGuardadas.get(codigoFinca);
+                    if (finca != null) origen.add(finca);
+                }
+                LoteTrazable nuevo = new LoteTrazable();
+                nuevo.setCodigo(l[0]);
+                nuevo.setFincas(origen);
+                nuevo.setKg(Double.valueOf(l[2]));
+                nuevo.setHumedad(Double.valueOf(l[3]));
+                nuevo.setPuntaje(Double.valueOf(l[4]));
+                nuevo.setDestino(l[5]);
+                nuevo.setComprador(l[6]);
+                nuevo.setEstadoEudr(EstadoEudr.valueOf(l[7]));
+                nuevo.setProvenance(DataProvenance.SIMULATED);
+                nuevo.setCompanyId(companyId);
+                return trazaLoteRepo.save(nuevo);
+            });
+            lotesGuardados.put(l[0], lote);
+        }
+
+        if (trazaEventoRepo.findByLoteIdOrderByFechaAsc(lotesGuardados.get("LT-2026-0412").getId()).isEmpty()) {
+            saveEventoSeed(lotesGuardados.get("LT-2026-0412"), Etapa.COSECHA, "2026-10-02T07:30:00-05:00",
+                    "Finca La Esperanza", -76.0712, 1.8521, "38 arrobas de cereza, recolección selectiva",
+                    "Rosa Elvira Cuéllar", Canal.VOZ);
+            saveEventoSeed(lotesGuardados.get("LT-2026-0412"), Etapa.BENEFICIO, "2026-10-03T16:00:00-05:00",
+                    "Finca La Esperanza", -76.0712, 1.8521,
+                    "Fermentación 20 h, secado en marquesina hasta 11,2 %", "Rosa Elvira Cuéllar", Canal.APP_OFFLINE);
+            saveEventoSeed(lotesGuardados.get("LT-2026-0412"), Etapa.ACOPIO, "2026-10-09T10:15:00-05:00",
+                    "Cooperativa Cadefihuila, Pitalito", -76.0498, 1.8537,
+                    "Pesaje 1.250 kg pergamino, muestra de taza 84,5", "Cooperativa Cadefihuila", Canal.WEB);
+            saveEventoSeed(lotesGuardados.get("LT-2026-0412"), Etapa.TRILLA, "2026-10-14T08:00:00-05:00",
+                    "Trilladora Neiva", -75.2819, 2.9273, "Trilla y selección: excelso EP, 69 kg × 15 sacos",
+                    "Trilladora Neiva", Canal.WEB);
+            saveEventoSeed(lotesGuardados.get("LT-2026-0412"), Etapa.TRANSPORTE, "2026-10-16T05:00:00-05:00",
+                    "Vía Neiva–Buenaventura", -75.6812, 4.5339,
+                    "Contenedor 20 pies sellado, guía RNDC 88213", "Transportes del Sur", Canal.WHATSAPP);
+            saveEventoSeed(lotesGuardados.get("LT-2026-0412"), Etapa.PUERTO, "2026-10-18T13:40:00-05:00",
+                    "Puerto de Buenaventura", -77.0697, 3.8801,
+                    "Inspección ICA, DEX en VUCE, declaración EUDR enviada", "Laura Restrepo", Canal.WEB);
+        }
+
+        if (trazaEventoRepo.findByLoteIdOrderByFechaAsc(lotesGuardados.get("LT-2026-0419").getId()).isEmpty()) {
+            saveEventoSeed(lotesGuardados.get("LT-2026-0419"), Etapa.COSECHA, "2026-10-05T07:00:00-05:00",
+                    "Finca Los Naranjos", -76.2985, 1.870500125, "30 arrobas de cereza",
+                    "Edilberto Perdomo", Canal.WHATSAPP);
+            saveEventoSeed(lotesGuardados.get("LT-2026-0419"), Etapa.ACOPIO, "2026-10-11T11:00:00-05:00",
+                    "Cooperativa Cadefihuila, Pitalito", -76.0498, 1.8537,
+                    "Pesaje 980 kg; humedad 12,4 % (límite)", "Cooperativa Cadefihuila", Canal.WEB);
+        }
+
+        if (trazaEventoRepo.findByLoteIdOrderByFechaAsc(lotesGuardados.get("LT-2026-0423").getId()).isEmpty()) {
+            saveEventoSeed(lotesGuardados.get("LT-2026-0423"), Etapa.COSECHA, "2026-10-07T06:45:00-05:00",
+                    "Finca La Cumbre", -76.55200014285715, 2.479000142857143,
+                    "22 arrobas, café de origen Cauca", "Hernán Muñoz", Canal.APP_OFFLINE);
+            saveEventoSeed(lotesGuardados.get("LT-2026-0423"), Etapa.ACOPIO, "2026-10-12T09:30:00-05:00",
+                    "Centro de acopio Popayán", -76.6066, 2.4448,
+                    "Registro sin señal; sincronizado 2 h después", "Hernán Muñoz", Canal.APP_OFFLINE);
+        }
+    }
+
+    private Double[] bboxPoligono(ObjectMapper mapper, String json) {
+        try {
+            List<List<Double>> puntos = mapper.readValue(json, new TypeReference<List<List<Double>>>() {
+            });
+            double minLat = Double.POSITIVE_INFINITY;
+            double maxLat = Double.NEGATIVE_INFINITY;
+            double minLng = Double.POSITIVE_INFINITY;
+            double maxLng = Double.NEGATIVE_INFINITY;
+            for (List<Double> punto : puntos) {
+                minLng = Math.min(minLng, punto.get(0));
+                maxLng = Math.max(maxLng, punto.get(0));
+                minLat = Math.min(minLat, punto.get(1));
+                maxLat = Math.max(maxLat, punto.get(1));
+            }
+            return new Double[]{minLat, maxLat, minLng, maxLng};
+        } catch (Exception ex) {
+            return new Double[]{null, null, null, null};
+        }
+    }
+
+    private void saveEventoSeed(LoteTrazable lote, Etapa etapa, String fecha, String lugar,
+                                double lng, double lat, String detalle, String registradoPor, Canal canal) {
+        EventoLote evento = new EventoLote();
+        evento.setLote(lote);
+        evento.setEtapa(etapa);
+        evento.setFecha(OffsetDateTime.parse(fecha));
+        evento.setLugar(lugar);
+        evento.setLng(lng);
+        evento.setLat(lat);
+        evento.setDetalle(detalle);
+        evento.setRegistradoPor(registradoPor);
+        evento.setCanal(canal);
+        evento.setProvenance(DataProvenance.SIMULATED);
+        evento.setRecibidoEn(Instant.now());
+        trazaEventoRepo.save(evento);
     }
 
     private Role createRole(String code, String name, String desc, Collection<Permission> perms) {
