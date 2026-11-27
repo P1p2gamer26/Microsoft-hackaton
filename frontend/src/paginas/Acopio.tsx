@@ -212,7 +212,7 @@ export default function Acopio() {
         tipo: 'lote',
         detalle: `${id} · ${kgNumero} kg · ${humedadNumero} %`,
         datos: { id, kg: kgNumero, humedad: humedadNumero, puntaje: puntajeNumero },
-      }),
+      }).cola,
     )
   }
 

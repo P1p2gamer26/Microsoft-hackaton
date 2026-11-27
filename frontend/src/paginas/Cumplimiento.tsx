@@ -1,7 +1,7 @@
 ﻿import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { colorEstado, etiquetaEstado, fincas, type EstadoEudr, type Etapa, type Lote } from '../datos'
-import { todosLosLotes } from '../registro'
+import { useLotes } from '../registro'
 import './Cumplimiento.css'
 
 const estados: EstadoEudr[] = ['cumple', 'revision', 'riesgo']
@@ -113,7 +113,7 @@ export default function Cumplimiento() {
   const botonDeclaracionRef = useRef<HTMLButtonElement>(null)
   const temporizadorRef = useRef<number | null>(null)
 
-  const lotes = todosLosLotes()
+  const lotes = useLotes()
   const conPoligono = fincas.filter(f => f.poligono.length >= 4).length
   const fincasCumplen = fincas.filter(f => f.estado === 'cumple').length
   const lotesCumplen = lotes.filter(l => l.estado === 'cumple')

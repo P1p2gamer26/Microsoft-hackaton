@@ -20,6 +20,7 @@ venv/
 backend/data/
 *.log
 *.tmp
+*.local
 
 # Binarios e instaladores descargados
 *.exe
