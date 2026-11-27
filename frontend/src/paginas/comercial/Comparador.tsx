@@ -1,5 +1,6 @@
-import './comercial.css'
+import { Navigate } from 'react-router-dom'
 
+// El comparador verde vs. tostado vive en Compradores, junto al lote que se va a vender.
 export default function Comparador() {
-  return <section className="com-pagina"><h1>Comparador verde vs. tostado</h1></section>
+  return <Navigate to="/compradores#comparador" replace />
 }

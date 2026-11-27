@@ -163,6 +163,11 @@ const numero = (valor: string) => {
   return Number.isFinite(resultado) ? resultado : 0
 }
 
+// Desde el menú "Verde vs. tostado" se llega con #comparador
+const irAlComparador = (nodo: HTMLElement | null) => {
+  if (nodo && window.location.hash === '#comparador') document.getElementById('comparador')?.scrollIntoView()
+}
+
 export default function Compradores() {
   const [loteId, setLoteId] = useState(lotes[0].id)
   const [detalleId, setDetalleId] = useState<string | null>(null)
@@ -244,7 +249,7 @@ export default function Compradores() {
   }
 
   return (
-    <section className="comp-pagina">
+    <section className="comp-pagina" ref={irAlComparador}>
       <header className="vidrio comp-cabecera">
         <div>
           <p className="comp-ojeada">Laura Restrepo · Comercial · Bogotá</p>
@@ -414,7 +419,7 @@ export default function Compradores() {
         </div>
       </section>
 
-      <section className="vidrio comp-bloque" aria-labelledby="comparador-titulo">
+      <section id="comparador" className="vidrio comp-bloque" aria-labelledby="comparador-titulo">
         <div className="comp-bloque-cabecera">
           <div>
             <h2 id="comparador-titulo">Comparador café verde vs. tostado</h2>
