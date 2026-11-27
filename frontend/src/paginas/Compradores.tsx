@@ -1,4 +1,5 @@
 import { Fragment, useMemo, useState } from 'react'
+import { enviarJson, usePedido } from '../api'
 import Etiqueta from '../componentes/Etiqueta'
 import { etiquetaEstado, fincas, lotes } from '../datos'
 import {
@@ -6,10 +7,121 @@ import {
   compradores,
   puntajeCompatibilidad,
   supuestosPorDefecto,
+  type Comprador,
+  type RegionComprador,
+  type TipoComprador,
 } from '../compradores'
 import './Compradores.css'
 
 type ClaveSupuesto = keyof typeof supuestosPorDefecto
+
+interface ContactoBackend {
+  fullName: string
+  email: string
+}
+
+interface CompradorBackend {
+  id: number
+  companyName: string
+  countryIso2: string
+  countryName: string
+  cityName: string | null
+  businessActivity: string | null
+  buyerType: string
+  commercialChannel: string | null
+  preferredCoffeeType: string | null
+  preferredPresentation: string | null
+  interestedInColombianCoffee: boolean
+  supportsPrivateLabel: boolean
+  verifiedPurchaseCapacityKgYear: number | null
+  capacityVerified: boolean
+  publicContactInfo: string | null
+  commercialNotes: string | null
+  contacts?: ContactoBackend[]
+}
+
+interface EscenarioBackend {
+  finalKg: number
+  productionCost: number
+  logisticsCost: number
+  totalExportCost: number
+  costPerKg: number
+  estimatedRevenue: number
+  grossMargin: number
+  marginPct: number
+  breakEvenPricePerKg: number
+  weightLossKg?: number
+  meetsExpectedMargin?: boolean
+}
+
+interface ResultadoComparadorBackend {
+  scenarioName: string
+  currency: string
+  greenScenario: EscenarioBackend
+  roastedScenario: EscenarioBackend
+  economicDifferenceRoastedVsGreen: number
+  favorableOption: 'GREEN_COFFEE' | 'ROASTED_COFFEE'
+  dataProvenance: string
+  disclaimer: string
+}
+
+const PAISES_UE = ['Alemania', 'Bélgica', 'Países Bajos', 'Francia', 'Italia', 'España']
+const PAISES_ASIA = ['Japón', 'Corea', 'China']
+const ISOS_UE = ['DE', 'BE', 'NL', 'FR', 'IT', 'ES', 'AT', 'PT', 'IE', 'SE', 'DK', 'FI', 'PL']
+
+function regionDe(pais: string, iso2: string): RegionComprador {
+  if (PAISES_UE.includes(pais) || ISOS_UE.includes(iso2)) return 'UE'
+  if (pais === 'Estados Unidos' || iso2 === 'US') return 'EE. UU.'
+  if (pais === 'Canadá' || iso2 === 'CA') return 'Canadá'
+  if (PAISES_ASIA.includes(pais) || ['JP', 'KR', 'CN'].includes(iso2)) return 'Asia'
+  return 'EE. UU.'
+}
+
+function tipoDe(buyerType: string): TipoComprador {
+  if (buyerType === 'ROASTER') return 'Tostador'
+  if (buyerType === 'CAFE_CHAIN') return 'Cadena de cafeterías'
+  if (buyerType === 'DISTRIBUTOR' || buyerType === 'PRIVATE_LABEL') return 'Distribuidor'
+  return 'Importador'
+}
+
+function formaDe(tipo: string | null, presentacion: string | null): 'verde' | 'tostado' {
+  const texto = `${tipo ?? ''} ${presentacion ?? ''}`.toLowerCase()
+  return /roast|tost|grano|molido/.test(texto) ? 'tostado' : 'verde'
+}
+
+function precioDe(tipo: string | null): number {
+  if (tipo === 'SPECIALTY') return 7.4
+  if (tipo === 'ORGANIC') return 7.6
+  if (tipo === 'EXCELSO') return 6.6
+  return 6.8
+}
+
+function compradorDelBackend(buyer: CompradorBackend): Comprador {
+  const pais = buyer.countryName
+  const region = regionDe(pais, buyer.countryIso2)
+  const certificaciones = [
+    buyer.capacityVerified ? 'Capacidad verificada' : '',
+    buyer.supportsPrivateLabel ? 'Marca privada' : '',
+    buyer.interestedInColombianCoffee ? 'Interés en café colombiano' : '',
+  ].filter(Boolean)
+  return {
+    id: `api-${buyer.id}`,
+    nombre: buyer.companyName,
+    contacto: buyer.contacts?.[0]?.fullName ?? buyer.publicContactInfo ?? 'Contacto público',
+    ciudad: buyer.cityName ?? '',
+    pais,
+    region,
+    tipo: tipoDe(buyer.buyerType),
+    quiere: formaDe(buyer.preferredCoffeeType, buyer.preferredPresentation),
+    segmento: buyer.commercialChannel ?? buyer.businessActivity ?? 'Perfil internacional',
+    volumenKg: buyer.capacityVerified ? Math.round(buyer.verifiedPurchaseCapacityKgYear ?? 0) : 0,
+    precioObjetivoUsdKg: precioDe(buyer.preferredCoffeeType),
+    certificaciones,
+    exigeEudr: region === 'UE',
+    verificado: buyer.capacityVerified,
+    nota: buyer.commercialNotes ?? undefined,
+  }
+}
 
 const nf = new Intl.NumberFormat('es-CO')
 const usd = new Intl.NumberFormat('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -55,6 +167,11 @@ export default function Compradores() {
   const [loteId, setLoteId] = useState(lotes[0].id)
   const [detalleId, setDetalleId] = useState<string | null>(null)
   const [valores, setValores] = useState<Record<ClaveSupuesto, string>>(() => aTexto(supuestosPorDefecto))
+  const [simulacion, setSimulacion] = useState<ResultadoComparadorBackend | null>(null)
+  const [simulando, setSimulando] = useState(false)
+  const [errorSimulacion, setErrorSimulacion] = useState<Error | null>(null)
+
+  const compradoresDelBackend = usePedido<CompradorBackend[]>('/buyers')
 
   const supuestos = useMemo(() => ({
     costoMateriaPrimaUsdKg: numero(valores.costoMateriaPrimaUsdKg),
@@ -68,15 +185,62 @@ export default function Compradores() {
 
   const lote = lotes.find(item => item.id === loteId) ?? lotes[0]
   const fincasDelLote = fincas.filter(finca => lote.fincaIds.includes(finca.id))
-  const filas = compradores
+  const directorio = useMemo(() => {
+    const nombres = new Set(compradores.map(comprador => comprador.nombre))
+    const externos = (compradoresDelBackend.datos ?? [])
+      .map(compradorDelBackend)
+      .filter(comprador => {
+        if (nombres.has(comprador.nombre)) return false
+        nombres.add(comprador.nombre)
+        return true
+      })
+    return [...compradores, ...externos]
+  }, [compradoresDelBackend.datos])
+  const filas = directorio
     .map(comprador => ({ comprador, compatibilidad: puntajeCompatibilidad(comprador, lote, fincasDelLote) }))
     .sort((a, b) => b.compatibilidad.total - a.compatibilidad.total)
   const comparacion = compararVerdeTostado(supuestos)
-  const bloqueoUE = lote.estado === 'riesgo' && compradores.some(comprador => comprador.exigeEudr)
+  const bloqueoUE = lote.estado === 'riesgo' && directorio.some(comprador => comprador.exigeEudr)
   const precioReferencia = 5.2 + (lote.puntaje - 80) * 0.35
 
   const cambiarSupuesto = (clave: ClaveSupuesto, valor: string) => {
     setValores(anteriores => ({ ...anteriores, [clave]: valor }))
+  }
+
+  const simularEnBackend = async () => {
+    setSimulando(true)
+    setErrorSimulacion(null)
+    try {
+      const respuesta = await enviarJson<ResultadoComparadorBackend>('/comparator/simulate', {
+        scenarioName: `CaféTrace · ${lote.id}`,
+        greenCoffeeKg: lote.kg,
+        greenPurchasePriceUsdKg: supuestos.costoMateriaPrimaUsdKg,
+        processingSelectionCostUsd: 0,
+        roastingCostUsdKg: supuestos.costoTostionUsdKg,
+        roastingWeightLossPct: 16,
+        grindingCostUsdKg: 0,
+        packagingCostUsd: supuestos.costoEmpaqueUsdKg * lote.kg * 0.84,
+        labelingCostUsd: 0,
+        storageCostUsd: 0,
+        domesticTransportUsd: supuestos.costoFleteUsdKg * lote.kg,
+        internationalTransportUsd: 0,
+        insuranceUsd: 0,
+        customsFeesUsd: 0,
+        tariffsUsd: 0,
+        destinationDistributionUsd: 0,
+        commercialCommissionUsd: 0,
+        greenSalePriceUsdKg: supuestos.precioVerdeUsdKg,
+        roastedSalePriceUsdKg: supuestos.precioTostadoGranoUsdKg,
+        currency: 'USD',
+        expectedMarginPct: comparacion.alternativas.find(alternativa => alternativa.esMejor)?.margenContribucion ?? 0,
+      })
+      setSimulacion(respuesta)
+    } catch (fallo) {
+      setSimulacion(null)
+      setErrorSimulacion(fallo instanceof Error ? fallo : new Error(String(fallo)))
+    } finally {
+      setSimulando(false)
+    }
   }
 
   return (
@@ -258,7 +422,18 @@ export default function Compradores() {
               Costos, merma y márgenes recalculados al instante con tus supuestos.
             </p>
           </div>
-          <span className="chip chip-revision">Merma del 16 % al tostar</span>
+          <div className="comp-acciones comp-simular">
+            <span className="chip chip-revision">Merma del 16 % al tostar</span>
+            <button
+              className="boton"
+              type="button"
+              onClick={() => void simularEnBackend()}
+              disabled={simulando}
+              aria-busy={simulando}
+            >
+              {simulando ? 'Simulando…' : 'Simular en el backend'}
+            </button>
+          </div>
         </div>
 
         <div className="comp-supuestos">
@@ -308,6 +483,57 @@ export default function Compradores() {
             </tbody>
           </table>
         </div>
+
+        {errorSimulacion && (
+          <div className="vidrio comp-error comp-sim-error" role="alert">
+            No se pudo simular en el backend: {errorSimulacion.message}
+          </div>
+        )}
+
+        {simulacion && (
+          <div className="comp-backend">
+            <h3>Resultado del backend <Etiqueta tipo="estimado" /></h3>
+            <p className="comp-suave">
+              {simulacion.scenarioName} · {simulacion.currency} · opción favorable:{' '}
+              {simulacion.favorableOption === 'ROASTED_COFFEE' ? 'café tostado' : 'café verde'}
+            </p>
+            <div className="comp-tabla-wrap">
+              <table className="comp-tabla comp-tabla-comparador">
+                <thead>
+                  <tr>
+                    <th scope="col">Alternativa</th>
+                    <th scope="col" className="comp-num">Kg finales</th>
+                    <th scope="col" className="comp-num">Costo total</th>
+                    <th scope="col" className="comp-num">Costo por kg</th>
+                    <th scope="col" className="comp-num">Ingreso estimado</th>
+                    <th scope="col" className="comp-num">Margen bruto</th>
+                    <th scope="col" className="comp-num">Margen %</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {([
+                    ['Café verde', simulacion.greenScenario],
+                    ['Café tostado', simulacion.roastedScenario],
+                  ] as const).map(([nombre, escenario]) => (
+                    <tr key={nombre}>
+                      <td><strong>{nombre}</strong></td>
+                      <td className="comp-num">{nf.format(escenario.finalKg)}</td>
+                      <td className="comp-num">{usd.format(escenario.totalExportCost)}</td>
+                      <td className="comp-num">{usd.format(escenario.costPerKg)}</td>
+                      <td className="comp-num">{usd.format(escenario.estimatedRevenue)}</td>
+                      <td className="comp-num">{usd.format(escenario.grossMargin)}</td>
+                      <td className="comp-num">{pct.format(escenario.marginPct)} %</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="comp-suave">
+              Diferencia a favor de tostado: {usd.format(simulacion.economicDifferenceRoastedVsGreen)} {simulacion.currency}
+            </p>
+            <p className="comp-nota">{simulacion.disclaimer}</p>
+          </div>
+        )}
 
         <p className="comp-nota">
           La herramienta no asume que tostar siempre gana: lo decide el margen.

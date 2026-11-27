@@ -1,0 +1,5 @@
+.admin-permisos { margin-top: 8px; max-width: 420px; }
+details summary { cursor: pointer; color: var(--cafe-claro); font-size: 12px; }
+.com-kpi > strong + span { display: block; margin-top: 8px; }
+.com-kpi .com-nota { margin: 8px 0 0; font-size: 11px; overflow-wrap: anywhere; }
+.com-kpi .chip { font-size: 11px; }
