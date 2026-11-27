@@ -28,7 +28,7 @@
 | Blueprint de Render (web + api + agente + Postgres/PostGIS) | ✅ | `render.yaml`, `DEPLOY.md` |
 | Backend corriendo en local con JDK 21 + H2 | 🔄 de validación | dependencias Maven descargándose en el arranque |
 | `iniciar-demo.ps1` (backend + frontend + analytics opcional) | ✅ | detecta JDK 21 y Maven portable; Ollama/agente quedan en pausa (se arrancan aparte con `agent/start.ps1`) |
-| Módulo comercial completo de Coffee Value Bridge | ✅ | 14 pantallas portadas a `frontend/src/cvb/` y montadas en `/cvb`; login compartido con CaféTrace, Tailwind aislado y verificado en navegador |
+| Módulo comercial completo de Coffee Value Bridge | ✅ | 14 pantallas de `origin/main` integradas en `frontend/src/paginas/comercial/` y montadas en `/comercial/*` dentro de CaféTrace; mismo tema visual y verificado en navegador |
 | IA aplicada a Campo y Declaración EUDR | ❌ | hay plan en `plan_ia_ollama.md`, pero los endpoints `/ia/*` no existen |
 | Analytics desplegado en Render | ❌ | el servicio Flask no está en `render.yaml` |
 | Guion de pitch y video de respaldo | ❌ | borrador en `plan_mejoras.md` |
@@ -65,16 +65,16 @@ RENDER (demo pública)
 **Hecho cuando:** con todo apagado, `.\iniciar-demo.ps1` deja la demo usable en menos de 3 minutos (salvo primera descarga de dependencias).
 
 ### Tanda B — Módulo comercial completo (hecho)
-**Archivos:** `frontend/src/cvb/**`, `frontend/src/App.tsx`, `frontend/package.json`, `frontend/tailwind.config.js`, `frontend/postcss.config.js`.
+**Archivos:** `frontend/src/paginas/comercial/**`, `frontend/src/App.tsx`, `frontend/src/api.ts`, `frontend/src/persona.tsx`.
 
-1. **Portadas las 14 pantallas** de `legacy/cvb-frontend`: dashboard, radar de mercados, buscador de compradores, CRM, inventario, comparador verde/tostado, GIS, copiloto de exportación, pedidos, time to market, finanzas, reportes, administración y login.
-2. Montadas en `/cvb/*` dentro del `HashRouter` de CaféTrace, con menú "Módulo comercial" visible para todas las personas.
-3. **Sesión compartida:** el cliente CVB lee primero `sessionStorage.cafetrace-token`; el login CVB escribe en ambos almacenes y decodifica el JWT para obtener roles/permisos.
-4. **Estilos aislados:** Tailwind con `preflight: false` y una clase `.cvb-root` envolvente (cream `#F4EFE5`, verde `#173D32`, Inter). El tema oscuro de CaféTrace no se altera.
+1. **Integradas las 14 pantallas** que llegaron en `origin/main`: panel comercial, radar de mercados, buscador de compradores, CRM, inventario, comparador verde/tostado, GIS, copiloto de exportación, pedidos, time to market, finanzas, reportes y administración.
+2. Montadas en `/comercial/*` dentro del `HashRouter` de CaféTrace, con menú "Comercial" para la persona Comercial y Jurado.
+3. **Sesión compartida:** las pantallas usan `pedir`/`usePedido` de `api.ts`, que reutiliza el JWT de CaféTrace y vuelve a hacer login con la cuenta de la persona si expira.
+4. **Una sola identidad visual:** los CSS del módulo usan las variables de CaféTrace (fondo `#0d0a08`, texto `#f5ebe0`, Inter/Space Grotesk), sin Tailwind ni tema paralelo.
 
-**Hecho cuando:** en `http://localhost:5173/#/cvb` cargan dashboard, radar, compradores y admin con datos del backend, sin errores de consola; CaféTrace sigue en `#/`.
+**Hecho cuando:** en `http://localhost:5173/#/comercial` cargan panel, mercados, comparador y admin con datos del backend, sin errores de consola; CaféTrace sigue en `#/`.
 
-**Pendiente menor:** el panel "Compradores" de CaféTrace (`paginas/Compradores.tsx`) todavía usa `datos.ts` con etiqueta demo; el buscador real ya está en `#/cvb/buyers`.
+**Nota:** el port alternativo con Tailwind (`frontend/src/cvb/**`) se eliminó para no tener dos versiones del módulo.
 
 ### Tanda C — IA en el flujo de campo y cumplimiento (2 h) · EN PAUSA
 > Por decisión del equipo, Ollama y el agente se dejan a un lado temporalmente; se arrancan aparte con `agent/start.ps1` y no bloquean la integración CaféTrace + Coffee Value Bridge.
