@@ -22,7 +22,7 @@ Endpoints propuestos (Spring Boot):
 |---|-------|---------|
 | 1.1 | **Modo sin señal real en Campo**: service worker propio (sin librerías) que guarda la app, más la cola en IndexedDB o localStorage que se envía al volver la señal | La demo en modo avión es lo que más separa al equipo. Principio 2 del caso |
 | 1.2 | **WhatsApp simulado**: pantalla de chat donde Rosa manda una nota de voz o foto y el bot responde con el lote registrado | Principio 2 (canales de bajo consumo). Celulares gama media |
-| 1.3 | **IA real de Azure en un flujo visible**: Azure AI Speech (voz a texto es-CO) y Azure OpenAI para convertir el texto en dato estructurado. Si no hay créditos: voz del navegador + extractor local, rotulado "simulado" | El jurado pregunta primero "¿dónde está la IA?". Hoy puntúa 3/10 |
+| 1.3 | **IA en un flujo visible (por ahora Ollama local, ver `plan_ia_ollama.md`)**: Azure AI Speech (voz a texto es-CO) y Azure OpenAI para convertir el texto en dato estructurado. Si no hay créditos: voz del navegador + extractor local, rotulado "simulado" | El jurado pregunta primero "¿dónde está la IA?". Hoy puntúa 3/10 |
 | 1.4 | **Lectura de remisión en papel**: subir foto → Azure AI Vision / Document Intelligence extrae kg, humedad y finca | Segundo flujo de IA. Ataca la informalidad del acopio |
 
 ## Fase 2 · Quitar riesgos de la demo
