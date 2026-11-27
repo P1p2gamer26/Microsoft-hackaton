@@ -1,6 +1,7 @@
 package com.asoexport.cvb.service;
 
 import com.asoexport.cvb.common.ApiException;
+import com.asoexport.cvb.common.BodyValues;
 import com.asoexport.cvb.common.DataProvenance;
 import com.asoexport.cvb.common.TenantContext;
 import com.asoexport.cvb.domain.Country;
@@ -28,18 +29,23 @@ public class ExportCopilotService {
     private final ExportDocumentRepository docRepo;
     private final CountryRepository countryRepo;
     private final AuditService audit;
+    private final LlmCopilotClient llm;
 
     public ExportCopilotService(RegulatoryRequirementRepository regRepo, ExportDocumentRepository docRepo,
-                                CountryRepository countryRepo, AuditService audit) {
+                                CountryRepository countryRepo, AuditService audit, LlmCopilotClient llm) {
         this.regRepo = regRepo;
         this.docRepo = docRepo;
         this.countryRepo = countryRepo;
         this.audit = audit;
+        this.llm = llm;
     }
 
     public Map<String, Object> analyzeExportQuery(Map<String, Object> body) {
         Long companyId = TenantContext.resolveCompanyId(null);
-        String prompt = String.valueOf(body.getOrDefault("prompt", ""));
+        String prompt = BodyValues.text(body, "prompt", "");
+        if (prompt.isEmpty()) {
+            throw new ApiException(400, "El campo prompt es obligatorio");
+        }
         String lower = prompt.toLowerCase(Locale.ROOT);
 
         String destIso2 = String.valueOf(body.getOrDefault("destinationIso2", "")).toUpperCase();
@@ -144,8 +150,77 @@ public class ExportCopilotService {
                 "Confirmar Incoterm pactado para delimitar seguro, flete y despacho aduanero."
         ));
         response.put("dataProvenance", DataProvenance.OFFICIAL.name());
-        response.put("legalDisclaimer", "Export Copilot cita fuentes oficiales con fecha de consulta, pero NO garantiza cumplimiento automático ni sustituye asesoría aduanera, sanitaria o legal profesional.");
+        String legalDisclaimer = "Export Copilot cita fuentes oficiales con fecha de consulta, pero NO garantiza cumplimiento automático ni sustituye asesoría aduanera, sanitaria o legal profesional.";
+        response.put("legalDisclaimer", legalDisclaimer);
+
+        // Capa opcional de LLM (Qwen3 vía Ollama local, u otro proveedor OpenAI-compatible).
+        // SOLO redacta la respuesta; los datos, cifras, citas y alertas siguen siendo del motor experto.
+        // Si el LLM no está configurado o falla, la respuesta es idéntica al motor local.
+        boolean llmUsed = false;
+        if (llm.isConfigured()) {
+            Optional<String> llmAnswer = llm.complete(llmSystemPrompt(), llmUserPrompt(prompt, response));
+            if (llmAnswer.isPresent()) {
+                response.put("copilotAnswer", llmAnswer.get());
+                llmUsed = true;
+            }
+        }
+        response.put("engine", llmUsed ? ("llm+expert:" + llm.model()) : "expert-local");
+        response.put("llm", Map.of(
+                "configured", llm.isConfigured(),
+                "used", llmUsed,
+                "model", llm.model()
+        ));
         return response;
+    }
+
+    private String llmSystemPrompt() {
+        return "Eres Export Copilot de Coffee Value Bridge, experto en exportación de café tostado colombiano "
+                + "(requisitos FDA, FSVP, Prior Notice, EUDR, DIAN/DEX, arancelaria HS, inocuidad, etiquetado). "
+                + "Responde en español, breve y accionable. Regla dura: NO inventes datos, cifras, fechas, nombres "
+                + "ni fuentes; usa únicamente la información del bloque DATOS que recibes y cita las fuentes que "
+                + "allí aparecen. Si algo no está en los datos, dilo claramente. No reemplazas asesoría legal, "
+                + "aduanera ni sanitaria; incluye una nota final de verificación profesional.";
+    }
+
+    private String llmUserPrompt(String prompt, Map<String, Object> analysis) {
+        StringBuilder data = new StringBuilder();
+        data.append("DATOS (motor experto local, no inventes nada fuera de esto):\n");
+        appendData(data, "operationSummary", analysis.get("operationSummary"));
+        appendReqs(data, analysis.get("regulatoryRequirements"));
+        appendData(data, "applicableDocuments", analysis.get("applicableDocuments"));
+        appendData(data, "exporterResponsibilities", analysis.get("exporterResponsibilities"));
+        appendData(data, "importerResponsibilities", analysis.get("importerResponsibilities"));
+        appendData(data, "timeline", analysis.get("timeline"));
+        appendData(data, "missingDocumentAlerts", analysis.get("missingDocumentAlerts"));
+        appendData(data, "pendingValidationItems", analysis.get("pendingValidationItems"));
+        appendData(data, "consultationDate", analysis.get("consultationDate"));
+        return "PREGUNTA DEL USUARIO:\n" + prompt + "\n\n" + data
+                + "\nRedacta una respuesta clara en español basada SOLO en los DATOS. "
+                + "Resume la operación, lista los requisitos aplicables con sus fuentes, "
+                + "documentos obligatorios, alertas de documentos faltantes y próximos pasos.";
+    }
+
+    private void appendData(StringBuilder sb, String label, Object value) {
+        if (value == null) return;
+        sb.append(label).append(": ").append(String.valueOf(value)).append('\n');
+    }
+
+    /** Serializa requisitos regulatorios de forma compacta (título, descripción, fuente, obligatorio). */
+    private void appendReqs(StringBuilder sb, Object value) {
+        if (!(value instanceof List<?> list)) return;
+        StringBuilder buf = new StringBuilder("regulatoryRequirements:\n");
+        for (Object item : list) {
+            if (item instanceof RegulatoryRequirement r) {
+                buf.append("- [").append(r.isMandatory() ? "OBLIGATORIO" : "recomendado").append("] ")
+                        .append(r.getTitle()).append(": ").append(r.getDescription())
+                        .append(" (fuente: ").append(r.getOfficialSourceName());
+                if (r.getOfficialSourceUrl() != null && !r.getOfficialSourceUrl().isBlank()) {
+                    buf.append(" ").append(r.getOfficialSourceUrl());
+                }
+                buf.append(")\n");
+            }
+        }
+        sb.append(buf);
     }
 
     public List<ExportDocument> listDocuments(Long requestedCompanyId) {

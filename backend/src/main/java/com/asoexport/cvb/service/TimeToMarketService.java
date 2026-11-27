@@ -1,5 +1,6 @@
 package com.asoexport.cvb.service;
 
+import com.asoexport.cvb.common.BodyValues;
 import com.asoexport.cvb.common.DataProvenance;
 import com.asoexport.cvb.common.TenantContext;
 import com.asoexport.cvb.domain.*;
@@ -176,12 +177,12 @@ public class TimeToMarketService {
         Long companyId = TenantContext.resolveCompanyId(null);
         TimeEvent ev = new TimeEvent();
         ev.setCompanyId(companyId);
-        ev.setEntityType(String.valueOf(body.getOrDefault("entityType", "ORDER")));
-        ev.setEntityId(Long.valueOf(String.valueOf(body.getOrDefault("entityId", "1"))));
-        ev.setStageCode(String.valueOf(body.get("stageCode")));
+        ev.setEntityType(BodyValues.text(body, "entityType", "ORDER"));
+        ev.setEntityId(Long.valueOf(BodyValues.text(body, "entityId", "1")));
+        ev.setStageCode(BodyValues.requiredText(body, "stageCode", "stageCode"));
         ev.setOccurredAt(Instant.now());
-        ev.setDurationDaysFromPrev(new BigDecimal(String.valueOf(body.getOrDefault("durationDaysFromPrev", "1.0"))));
-        ev.setNotes(String.valueOf(body.getOrDefault("notes", "")));
+        ev.setDurationDaysFromPrev(new BigDecimal(BodyValues.text(body, "durationDaysFromPrev", "1.0")));
+        ev.setNotes(BodyValues.text(body, "notes", ""));
         ev.setDataProvenance(DataProvenance.USER_INPUT);
         return eventRepo.save(ev);
     }

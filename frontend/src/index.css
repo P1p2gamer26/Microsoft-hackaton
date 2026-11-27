@@ -1,7 +1,14 @@
-:root {
+/* ---------------------------------------------------------------------------
+   Sistema de diseño CaféTrace / Coffee Value Bridge
+   Un solo conjunto de tokens para las 23 pantallas. Temas: café (default),
+   claro (paper) y blanco y negro (alto contraste).
+--------------------------------------------------------------------------- */
+:root,
+:root[data-tema='cafe'] {
   --fondo: #0d0a08;
   --panel: rgba(28, 22, 18, 0.72);
   --panel-solido: #1c1612;
+  --lateral-fondo: #110d0a;
   --borde: rgba(255, 236, 214, 0.10);
   --texto: #f5ebe0;
   --texto-suave: #b8a898;
@@ -13,14 +20,73 @@
   --acento: linear-gradient(135deg, #c8875a 0%, #e8b48a 50%, #34d399 100%);
   --radio: 16px;
   --sombra: 0 20px 50px rgba(0, 0, 0, 0.45);
-  font-family: Inter, system-ui, sans-serif;
-  color: var(--texto);
-  background: var(--fondo);
-  -webkit-font-smoothing: antialiased;
+  --hover: rgba(255, 255, 255, 0.04);
+  --activo: rgba(200, 135, 90, 0.14);
+  --control: rgba(0, 0, 0, 0.25);
+  --pista: rgba(255, 255, 255, 0.06);
+  --boton-texto: #1a0f08;
+  color-scheme: dark;
+}
+
+:root[data-tema='claro'] {
+  --fondo: #f7f2ea;
+  --panel: rgba(255, 255, 255, 0.86);
+  --panel-solido: #fffdf9;
+  --lateral-fondo: #efe7db;
+  --borde: rgba(74, 49, 30, 0.16);
+  --texto: #2b1d14;
+  --texto-suave: #6d5c4c;
+  --cafe: #9a5f35;
+  --cafe-claro: #774a2b;
+  --verde: #147d55;
+  --ambar: #a06700;
+  --rojo: #b3382f;
+  --acento: linear-gradient(135deg, #9a5f35 0%, #c8875a 50%, #147d55 100%);
+  --radio: 16px;
+  --sombra: 0 18px 40px rgba(74, 49, 30, 0.12);
+  --hover: rgba(74, 49, 30, 0.05);
+  --activo: rgba(154, 95, 53, 0.12);
+  --control: rgba(255, 255, 255, 0.8);
+  --pista: rgba(74, 49, 30, 0.08);
+  --boton-texto: #fffdf9;
+  color-scheme: light;
+}
+
+:root[data-tema='blanco-negro'] {
+  --fondo: #ffffff;
+  --panel: rgba(255, 255, 255, 0.94);
+  --panel-solido: #ffffff;
+  --lateral-fondo: #f2f2f2;
+  --borde: rgba(0, 0, 0, 0.22);
+  --texto: #000000;
+  --texto-suave: #444444;
+  --cafe: #000000;
+  --cafe-claro: #222222;
+  --verde: #000000;
+  --ambar: #333333;
+  --rojo: #000000;
+  --acento: linear-gradient(135deg, #000000 0%, #555555 50%, #000000 100%);
+  --radio: 12px;
+  --sombra: 0 16px 34px rgba(0, 0, 0, 0.14);
+  --hover: rgba(0, 0, 0, 0.05);
+  --activo: rgba(0, 0, 0, 0.10);
+  --control: #ffffff;
+  --pista: rgba(0, 0, 0, 0.10);
+  --boton-texto: #ffffff;
+  color-scheme: light;
 }
 
 * { box-sizing: border-box; }
-body { margin: 0; min-height: 100vh; background: var(--fondo); }
+html { background: var(--fondo); }
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--fondo);
+  color: var(--texto);
+  font-family: Inter, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
 h1, h2, h3 { font-family: 'Space Grotesk', Inter, sans-serif; margin: 0; letter-spacing: -0.01em; }
 button { font: inherit; color: inherit; cursor: pointer; }
 a { color: inherit; }
@@ -40,21 +106,77 @@ a { color: inherit; }
 .chip-revision { background: rgba(251, 191, 36, 0.15); color: var(--ambar); }
 .chip-riesgo { background: rgba(248, 113, 113, 0.15); color: var(--rojo); }
 
-.boton { border: 0; border-radius: 12px; padding: 10px 16px; font-weight: 600; background: var(--cafe); color: #1a0f08; }
+/* En blanco y negro ningún chip puede introducir color. */
+:root[data-tema='blanco-negro'] .chip-cumple,
+:root[data-tema='blanco-negro'] .chip-revision,
+:root[data-tema='blanco-negro'] .chip-riesgo {
+  background: var(--pista);
+  border: 1px solid var(--borde);
+  color: var(--texto);
+}
+
+.boton { border: 0; border-radius: 12px; padding: 10px 16px; font-weight: 600; background: var(--cafe); color: var(--boton-texto); }
 .boton:hover { background: var(--cafe-claro); }
 .boton-fantasma { border: 1px solid var(--borde); border-radius: 12px; padding: 10px 16px; background: transparent; }
 
-.app { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
-.lateral { padding: 20px 14px; border-right: 1px solid var(--borde); background: #110d0a; display: flex; flex-direction: column; gap: 4px; }
+.app { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; background: var(--fondo); }
+.lateral {
+  padding: 20px 14px;
+  border-right: 1px solid var(--borde);
+  background: var(--lateral-fondo);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+  max-height: 100vh;
+  position: sticky;
+  top: 0;
+}
 .marca { display: flex; align-items: center; gap: 10px; padding: 6px 10px 22px; }
 .marca strong { font-family: 'Space Grotesk'; font-size: 20px; background: var(--acento); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .enlace { display: flex; flex-direction: column; padding: 10px 12px; border-radius: 12px; text-decoration: none; color: var(--texto-suave); }
 .enlace small { font-size: 11px; opacity: 0.7; }
-.enlace:hover { background: rgba(255, 255, 255, 0.04); color: var(--texto); }
-.enlace.active { background: rgba(200, 135, 90, 0.14); color: var(--texto); }
+.enlace:hover { background: var(--hover); color: var(--texto); }
+.enlace.active { background: var(--activo); color: var(--texto); }
 .contenido { min-width: 0; }
 .seccion-menu { margin: 14px 12px 4px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--cafe-claro); }
-.lateral { overflow-y: auto; max-height: 100vh; position: sticky; top: 0; }
+
+.selector-tema { display: flex; gap: 4px; margin: 0 4px 10px; padding: 4px; border: 1px solid var(--borde); border-radius: 12px; }
+.selector-tema button {
+  flex: 1;
+  padding: 6px 4px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--texto-suave);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.1;
+}
+.selector-tema button:hover { background: var(--hover); color: var(--texto); }
+.selector-tema button[aria-pressed='true'] { background: var(--activo); border-color: var(--cafe); color: var(--texto); }
+
+/* Ajustes de contraste para pantallas con detalles escritos a mano en tema oscuro */
+:root[data-tema='claro'] .persona-boton:hover,
+:root[data-tema='blanco-negro'] .persona-boton:hover { background: var(--hover); }
+:root[data-tema='claro'] .persona-boton[aria-pressed='true'],
+:root[data-tema='blanco-negro'] .persona-boton[aria-pressed='true'] { background: var(--activo); border-color: var(--cafe); }
+:root[data-tema='claro'] .campo-textarea,
+:root[data-tema='claro'] .imp-campo input,
+:root[data-tema='blanco-negro'] .campo-textarea,
+:root[data-tema='blanco-negro'] .imp-campo input { background: var(--control); color: var(--texto); }
+
+/* Blanco y negro estricto: ningún badge puede introducir color. */
+:root[data-tema='blanco-negro'] .chip,
+:root[data-tema='blanco-negro'] .etiqueta,
+:root[data-tema='blanco-negro'] [class*='etiqueta-'],
+:root[data-tema='blanco-negro'] .origen-api,
+:root[data-tema='blanco-negro'] .origen-demo,
+:root[data-tema='blanco-negro'] .chip-ia {
+  background: var(--pista) !important;
+  border-color: var(--borde) !important;
+  color: var(--texto) !important;
+}
 
 @media (max-width: 760px), (prefers-reduced-motion: reduce) {
   /* ponytail: el desenfoque cuesta mucho en celulares gama media; fondo sólido en su lugar */
@@ -67,4 +189,5 @@ a { color: inherit; }
   .marca { padding: 6px 10px; }
   .enlace { white-space: nowrap; }
   .enlace small { display: none; }
+  .selector-tema { margin: 0; }
 }

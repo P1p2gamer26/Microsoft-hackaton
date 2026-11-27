@@ -1,6 +1,7 @@
 package com.asoexport.cvb.service;
 
 import com.asoexport.cvb.common.ApiException;
+import com.asoexport.cvb.common.BodyValues;
 import com.asoexport.cvb.common.DataProvenance;
 import com.asoexport.cvb.common.TenantContext;
 import com.asoexport.cvb.domain.*;
@@ -124,45 +125,43 @@ public class OrderService {
     @Transactional
     public Order createOrder(Map<String, Object> body) {
         Long companyId = TenantContext.resolveCompanyId(null);
-        Long buyerId = Long.valueOf(String.valueOf(body.get("buyerId")));
-        Long productId = Long.valueOf(String.valueOf(body.get("productId")));
-        Long lotId = body.get("lotId") != null && !String.valueOf(body.get("lotId")).isBlank()
-                ? Long.valueOf(String.valueOf(body.get("lotId"))) : null;
+        Long buyerId = BodyValues.id(body, "buyerId", "buyerId");
+        Long productId = BodyValues.id(body, "productId", "productId");
+        String lotTexto = BodyValues.text(body, "lotId", "");
+        Long lotId = lotTexto.isEmpty() ? null : Long.valueOf(lotTexto);
 
         Product prod = productRepo.findById(productId).orElseThrow(() -> new ApiException(404, "Producto no encontrado"));
         TenantContext.assertCompanyAccess(prod.getCompanyId());
 
-        BigDecimal qtyKg = new BigDecimal(String.valueOf(body.get("quantityKg")));
-        BigDecimal unitPrice = body.get("unitPriceUsd") != null
-                ? new BigDecimal(String.valueOf(body.get("unitPriceUsd"))) : prod.getUnitPriceUsdKg();
+        BigDecimal qtyKg = BodyValues.decimal(body, "quantityKg", "quantityKg");
+        String priceTexto = BodyValues.text(body, "unitPriceUsd", "");
+        BigDecimal unitPrice = priceTexto.isEmpty() ? prod.getUnitPriceUsdKg() : new BigDecimal(priceTexto);
         BigDecimal revenue = qtyKg.multiply(unitPrice);
 
         Order o = new Order();
         o.setCompanyId(companyId);
         o.setOrderNumber("PED-" + LocalDate.now().getYear() + "-" + (1000 + new Random().nextInt(9000)));
         o.setBuyerId(buyerId);
-        if (body.get("routeId") != null && !String.valueOf(body.get("routeId")).isBlank()) {
-            o.setRouteId(Long.valueOf(String.valueOf(body.get("routeId"))));
-        }
+        String routeTexto = BodyValues.text(body, "routeId", "");
+        if (!routeTexto.isEmpty()) o.setRouteId(Long.valueOf(routeTexto));
         o.setStatus(lotId != null ? "INVENTORY_RESERVED" : "CONFIRMED");
-        o.setIncoterm(String.valueOf(body.getOrDefault("incoterm", "CIF")));
-        o.setCurrency(String.valueOf(body.getOrDefault("currency", "USD")));
+        o.setIncoterm(BodyValues.text(body, "incoterm", "CIF"));
+        o.setCurrency(BodyValues.text(body, "currency", "USD"));
         o.setTotalKg(qtyKg);
         o.setTotalRevenueUsd(revenue);
         o.setProductCostUsd(revenue.multiply(BigDecimal.valueOf(0.42)));
         o.setTransformationCostUsd(revenue.multiply(BigDecimal.valueOf(0.14)));
-        o.setLogisticsCostUsd(body.get("logisticsCostUsd") != null
-                ? new BigDecimal(String.valueOf(body.get("logisticsCostUsd"))) : qtyKg.multiply(BigDecimal.valueOf(1.25)));
+        String logisticaTexto = BodyValues.text(body, "logisticsCostUsd", "");
+        o.setLogisticsCostUsd(logisticaTexto.isEmpty()
+                ? qtyKg.multiply(BigDecimal.valueOf(1.25)) : new BigDecimal(logisticaTexto));
         o.setExportExpensesUsd(BigDecimal.valueOf(420));
         o.setFinancialCostUsd(revenue.multiply(BigDecimal.valueOf(0.015)));
         o.setCommissionCostUsd(revenue.multiply(BigDecimal.valueOf(0.03)));
-        o.setCarrierName(String.valueOf(body.getOrDefault("carrierName", "Operador por confirmar")));
+        o.setCarrierName(BodyValues.text(body, "carrierName", "Operador por confirmar"));
         o.setConfirmedAt(Instant.now());
-        o.setPlannedDispatchDate(body.get("plannedDispatchDate") != null && !String.valueOf(body.get("plannedDispatchDate")).isBlank()
-                ? LocalDate.parse(String.valueOf(body.get("plannedDispatchDate"))) : LocalDate.now().plusDays(7));
-        o.setEstimatedDeliveryDate(body.get("estimatedDeliveryDate") != null && !String.valueOf(body.get("estimatedDeliveryDate")).isBlank()
-                ? LocalDate.parse(String.valueOf(body.get("estimatedDeliveryDate"))) : LocalDate.now().plusDays(21));
-        o.setNotes(String.valueOf(body.getOrDefault("notes", "")));
+        o.setPlannedDispatchDate(BodyValues.date(body, "plannedDispatchDate", LocalDate.now().plusDays(7)));
+        o.setEstimatedDeliveryDate(BodyValues.date(body, "estimatedDeliveryDate", LocalDate.now().plusDays(21)));
+        o.setNotes(BodyValues.text(body, "notes", ""));
         o.setDataProvenance(DataProvenance.USER_INPUT);
         o.setCreatedBy(TenantContext.require().email());
         o = orderRepo.save(o);
@@ -189,7 +188,7 @@ public class OrderService {
         Order o = orderRepo.findById(orderId).orElseThrow(() -> new ApiException(404, "Pedido no encontrado"));
         TenantContext.assertCompanyAccess(o.getCompanyId());
 
-        String status = String.valueOf(body.get("status"));
+        String status = BodyValues.requiredText(body, "status", "status");
         if (!ORDER_STATUSES.contains(status)) {
             throw new ApiException(400, "Estado de pedido inválido: " + status);
         }
@@ -200,12 +199,10 @@ public class OrderService {
         if ("DELIVERED".equals(status) && o.getActualDeliveryDate() == null) {
             o.setActualDeliveryDate(LocalDate.now());
         }
-        if (body.get("actualDispatchDate") != null && !String.valueOf(body.get("actualDispatchDate")).isBlank()) {
-            o.setActualDispatchDate(LocalDate.parse(String.valueOf(body.get("actualDispatchDate"))));
-        }
-        if (body.get("actualDeliveryDate") != null && !String.valueOf(body.get("actualDeliveryDate")).isBlank()) {
-            o.setActualDeliveryDate(LocalDate.parse(String.valueOf(body.get("actualDeliveryDate"))));
-        }
+        String despacho = BodyValues.text(body, "actualDispatchDate", "");
+        if (!despacho.isEmpty()) o.setActualDispatchDate(LocalDate.parse(despacho));
+        String entrega = BodyValues.text(body, "actualDeliveryDate", "");
+        if (!entrega.isEmpty()) o.setActualDeliveryDate(LocalDate.parse(entrega));
         o.setUpdatedAt(Instant.now());
         o = orderRepo.save(o);
 

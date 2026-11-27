@@ -1,6 +1,7 @@
 package com.asoexport.cvb.service;
 
 import com.asoexport.cvb.common.ApiException;
+import com.asoexport.cvb.common.BodyValues;
 import com.asoexport.cvb.common.DataProvenance;
 import com.asoexport.cvb.common.TenantContext;
 import com.asoexport.cvb.domain.*;
@@ -125,30 +126,31 @@ public class CrmService {
     @Transactional
     public SalesOpportunity createOpportunity(Map<String, Object> body) {
         Long companyId = TenantContext.resolveCompanyId(null);
-        Long buyerId = Long.valueOf(String.valueOf(body.get("buyerId")));
-        Long productId = Long.valueOf(String.valueOf(body.get("productId")));
+        Long buyerId = BodyValues.id(body, "buyerId", "buyerId");
+        Long productId = BodyValues.id(body, "productId", "productId");
         Product prod = productRepo.findById(productId).orElseThrow(() -> new ApiException(404, "Producto no encontrado"));
         TenantContext.assertCompanyAccess(prod.getCompanyId());
 
-        BigDecimal vol = new BigDecimal(String.valueOf(body.get("volumeKg")));
-        BigDecimal price = body.get("targetPriceUsdKg") != null
-                ? new BigDecimal(String.valueOf(body.get("targetPriceUsdKg")))
-                : prod.getUnitPriceUsdKg();
+        String volTexto = BodyValues.text(body, "volumeKg", "");
+        if (volTexto.isEmpty()) volTexto = BodyValues.text(body, "estimatedVolumeKg", "1");
+        BigDecimal vol = new BigDecimal(volTexto);
+        String priceTexto = BodyValues.text(body, "targetPriceUsdKg", "");
+        BigDecimal price = priceTexto.isEmpty() ? prod.getUnitPriceUsdKg() : new BigDecimal(priceTexto);
 
         SalesOpportunity o = new SalesOpportunity();
         o.setCompanyId(companyId);
         o.setBuyerId(buyerId);
         o.setProductId(productId);
-        o.setTitle(String.valueOf(body.get("title")));
-        o.setStage(String.valueOf(body.getOrDefault("stage", "PROSPECT_IDENTIFIED")));
+        o.setTitle(BodyValues.requiredText(body, "title", "title"));
+        o.setStage(BodyValues.text(body, "stage", "PROSPECT_IDENTIFIED"));
         o.setVolumeKg(vol);
         o.setTargetPriceUsdKg(price);
         o.setOpportunityValueUsd(vol.multiply(price));
         o.setOwnerUserId(TenantContext.require().userId());
-        o.setOwnerName(String.valueOf(body.getOrDefault("ownerName", TenantContext.require().fullName())));
-        o.setProbabilityPct(Integer.valueOf(String.valueOf(body.getOrDefault("probabilityPct", "20"))));
+        o.setOwnerName(BodyValues.text(body, "ownerName", TenantContext.require().fullName()));
+        o.setProbabilityPct(BodyValues.integer(body, "probabilityPct", 20));
         o.setLastContactAt(Instant.now());
-        o.setNextActivityNote(String.valueOf(body.getOrDefault("nextActivityNote", "Seguimiento inicial")));
+        o.setNextActivityNote(BodyValues.text(body, "nextActivityNote", "Seguimiento inicial"));
         o.setStageEnteredAt(Instant.now());
         o.setDataProvenance(DataProvenance.USER_INPUT);
         o.setCreatedBy(TenantContext.require().email());
@@ -164,7 +166,7 @@ public class CrmService {
         SalesOpportunity o = oppRepo.findById(id).orElseThrow(() -> new ApiException(404, "Oportunidad no encontrada"));
         TenantContext.assertCompanyAccess(o.getCompanyId());
 
-        String newStage = String.valueOf(body.get("stage"));
+        String newStage = BodyValues.requiredText(body, "stage", "stage");
         if (!PIPELINE_STAGES.contains(newStage)) {
             throw new ApiException(400, "Etapa inválida: " + newStage);
         }
@@ -175,15 +177,14 @@ public class CrmService {
         o.setStageEnteredAt(Instant.now());
         o.setLastContactAt(Instant.now());
         o.setUpdatedAt(Instant.now());
-        if (body.get("probabilityPct") != null) {
-            o.setProbabilityPct(Integer.valueOf(String.valueOf(body.get("probabilityPct"))));
-        } else if ("CLOSED_WON".equals(newStage)) {
-            o.setProbabilityPct(100);
-        } else if ("CLOSED_LOST".equals(newStage)) {
-            o.setProbabilityPct(0);
+        if (BodyValues.text(body, "probabilityPct", "").isEmpty()) {
+            if ("CLOSED_WON".equals(newStage)) o.setProbabilityPct(100);
+            else if ("CLOSED_LOST".equals(newStage)) o.setProbabilityPct(0);
+        } else {
+            o.setProbabilityPct(BodyValues.integer(body, "probabilityPct", o.getProbabilityPct()));
         }
-        if (body.get("lossReason") != null) o.setLossReason(String.valueOf(body.get("lossReason")));
-        if (body.get("lossNotes") != null) o.setLossNotes(String.valueOf(body.get("lossNotes")));
+        if (!BodyValues.text(body, "lossReason", "").isEmpty()) o.setLossReason(BodyValues.text(body, "lossReason", ""));
+        if (!BodyValues.text(body, "lossNotes", "").isEmpty()) o.setLossNotes(BodyValues.text(body, "lossNotes", ""));
 
         o = oppRepo.save(o);
         String ttmCode = mapStageToTtm(newStage);
@@ -202,10 +203,10 @@ public class CrmService {
         SalesActivity a = new SalesActivity();
         a.setCompanyId(o.getCompanyId());
         a.setOpportunityId(oppId);
-        a.setActivityType(String.valueOf(body.getOrDefault("activityType", "CALL")));
-        a.setSubject(String.valueOf(body.get("subject")));
-        a.setNotes(String.valueOf(body.getOrDefault("notes", "")));
-        a.setDueAt(body.get("dueAt") != null ? Instant.parse(String.valueOf(body.get("dueAt"))) : Instant.now().plusSeconds(86400));
+        a.setActivityType(BodyValues.text(body, "activityType", "CALL"));
+        a.setSubject(BodyValues.requiredText(body, "subject", "subject"));
+        a.setNotes(BodyValues.text(body, "notes", ""));
+        a.setDueAt(BodyValues.instant(body, "dueAt", Instant.now().plusSeconds(86400)));
         a.setCreatedBy(TenantContext.require().email());
         o.setLastContactAt(Instant.now());
         oppRepo.save(o);

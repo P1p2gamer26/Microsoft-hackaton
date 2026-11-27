@@ -1,14 +1,33 @@
+# Node / Vite
 node_modules/
 dist/
+
+# Java / Maven
 target/
+
+# Python
 __pycache__/
+*.py[cod]
 *.pyc
 .venv/
+venv/
+
+# Datos locales y secretos
+.env
 *.db
 *.mv.db
 *.lock.db
 backend/data/
-.env
-.playwright-mcp/
 *.log
+*.tmp
 *.local
+
+# Binarios e instaladores descargados
+*.exe
+*.msi
+*.zip
+
+# Herramientas / SO
+.playwright-mcp/
+.DS_Store
+Thumbs.db

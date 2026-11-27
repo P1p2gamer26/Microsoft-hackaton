@@ -106,6 +106,64 @@ export const rutaHuilaBuenaventura: Coord[] = [
   [-75.6812, 4.5339], [-76.2988, 3.9009], [-76.6297, 3.8836], [-77.0697, 3.8801],
 ]
 
+// Puerto de exportación desde donde sale el café hacia mercados internacionales.
+export const puertoBuenaventura: Coord = [-77.0697, 3.8801]
+
+// Viajes internacionales: el café viaja por aire desde el puerto a mercados del mundo.
+export interface DestinoInternacional {
+  id: string
+  nombre: string
+  pais: string
+  coord: Coord
+  eeuu?: boolean // destino en Estados Unidos
+}
+
+export const destinosInternacionales: DestinoInternacional[] = [
+  { id: 'US-NYC', nombre: 'Nueva York', pais: 'EE. UU.', coord: [-74.0060, 40.7128], eeuu: true },
+  { id: 'US-MIA', nombre: 'Miami', pais: 'EE. UU.', coord: [-80.1918, 25.7617], eeuu: true },
+  { id: 'DE-HAM', nombre: 'Hamburgo', pais: 'Alemania', coord: [9.9937, 53.5511] },
+  { id: 'BE-ANR', nombre: 'Amberes', pais: 'Bélgica', coord: [4.4025, 51.2194] },
+]
+
+// Ruta aérea en arco (círculo máximo) entre dos puntos [lng, lat].
+export function arcoVuelo(a: Coord, b: Coord, n = 64): Coord[] {
+  // n debe ser ≥1; entero. Si no es finito, usar 64.
+  const pasos = Number.isFinite(n) && n >= 1 ? Math.floor(n) : 64
+  const toRad = Math.PI / 180
+  const toDeg = 180 / Math.PI
+  const lng1 = a[0] * toRad
+  const lat1 = a[1] * toRad
+  const lng2 = b[0] * toRad
+  const lat2 = b[1] * toRad
+  const h = Math.min(1, Math.sqrt(
+    Math.sin((lat2 - lat1) / 2) ** 2 +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin((lng2 - lng1) / 2) ** 2,
+  ))
+  const d = 2 * Math.asin(h)
+  const puntos: Coord[] = []
+  for (let i = 0; i <= pasos; i++) {
+    const f = i / pasos
+    if (d === 0) {
+      puntos.push([a[0], a[1]])
+      continue
+    }
+    const A = Math.sin((1 - f) * d) / Math.sin(d)
+    const B = Math.sin(f * d) / Math.sin(d)
+    const x = A * Math.cos(lat1) * Math.cos(lng1) + B * Math.cos(lat2) * Math.cos(lng2)
+    const y = A * Math.cos(lat1) * Math.sin(lng1) + B * Math.cos(lat2) * Math.sin(lng2)
+    const z = A * Math.sin(lat1) + B * Math.sin(lat2)
+    const lat = Math.atan2(z, Math.sqrt(x * x + y * y))
+    const lng = Math.atan2(y, x)
+    puntos.push([+(lng * toDeg).toFixed(6), +(lat * toDeg).toFixed(6)])
+  }
+  return puntos
+}
+
+// Ruta aérea desde Buenaventura hacia un destino internacional.
+export function rutaAereaInternacional(destino: Coord): Coord[] {
+  return arcoVuelo(puertoBuenaventura, destino)
+}
+
 const ev = (etapa: Etapa, fecha: string, l: { nombre: string; coord: Coord }, detalle: string, registradoPor: string, canal: EventoLote['canal']): EventoLote =>
   ({ etapa, fecha, lugar: l.nombre, coord: l.coord, detalle, registradoPor, canal })
 
@@ -157,8 +215,139 @@ export const estiloSatelite = {
     terreno: { type: 'raster-dem' as const, tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'], tileSize: 256, encoding: 'terrarium' as const, maxzoom: 14 },
   },
   layers: [{ id: 'satelite', type: 'raster' as const, source: 'satelite' }],
-  terrain: { source: 'terreno', exaggeration: 1.6 },
+  terrain: { source: 'terreno', exaggeration: 1.0 },
   sky: { 'sky-color': '#0b1220', 'horizon-color': '#3b2a1e', 'fog-color': '#1a140f', 'sky-horizon-blend': 0.6, 'horizon-fog-blend': 0.6 },
+}
+
+// ---- Simulación de movimiento + estimaciones de tiempo ----
+export const VELOCIDAD_TERRESTRE_KMH = 55 // camión de café por carretera
+export const VELOCIDAD_AEREA_KMH = 850 // avión comercial de carga
+export const OVERHEAD_TERRESTRE_H = 1.5 // carga, descarga, aduanas terrestres
+export const OVERHEAD_AEREO_H = 6 // check-in, inspección, despacho, desembarque
+
+export interface EstimacionViaje {
+  distanciaKm: number // distancia geodésica punto-a-punto
+  distanciaRutaKm: number // distancia recorriendo la ruta real
+  velocidadKmh: number
+  horas: number // horas en movimiento
+  overheadH: number // horas de maniobras/trámites
+  totalH: number // total estimado
+}
+
+// Distancia en km entre dos puntos [lng,lat] (haversine).
+export function distanciaKm(a: Coord, b: Coord): number {
+  const R = 6371
+  const toRad = Math.PI / 180
+  const dLat = (b[1] - a[1]) * toRad
+  const dLng = (b[0] - a[0]) * toRad
+  const lat1 = a[1] * toRad
+  const lat2 = b[1] * toRad
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)))
+}
+
+// Distancia recorriendo una ruta por sus segmentos.
+export function distanciaRutaKm(ruta: Coord[]): number {
+  if (ruta.length < 2) return 0
+  let total = 0
+  for (let i = 1; i < ruta.length; i++) total += distanciaKm(ruta[i - 1], ruta[i])
+  return total
+}
+
+export function estimarViaje(ruta: Coord[], velocidadKmh: number, overheadH: number, distanciaGeodesicaKm?: number): EstimacionViaje {
+  const distanciaRuta = distanciaRutaKm(ruta)
+  // distanciaKm = punto-a-punto geodésica; distanciaRutaKm = recorriendo segmentos.
+  const puntoAPunto = ruta.length >= 2 ? distanciaKm(ruta[0], ruta[ruta.length - 1]) : 0
+  const geo =
+    distanciaGeodesicaKm !== undefined && Number.isFinite(distanciaGeodesicaKm)
+      ? distanciaGeodesicaKm
+      : puntoAPunto
+  const distancia = ruta.length >= 2 ? distanciaRuta : geo
+  const velocidad = Number.isFinite(velocidadKmh) ? velocidadKmh : 0
+  const maniobras = Number.isFinite(overheadH) ? overheadH : 0
+  const horas = velocidad > 0 ? distancia / velocidad : 0
+  const horasR = +horas.toFixed(2)
+  return {
+    distanciaKm: +geo.toFixed(1),
+    distanciaRutaKm: +distanciaRuta.toFixed(1),
+    velocidadKmh: velocidad,
+    horas: horasR,
+    overheadH: maniobras,
+    totalH: +(horasR + maniobras).toFixed(2),
+  }
+}
+
+// Formatea horas como "X d Y h Z min" o "X h Z min".
+export function formatoDuracion(horas: number): string {
+  if (!isFinite(horas) || horas <= 0) return '0 min'
+  const totalMin = Math.round(horas * 60)
+  const d = Math.floor(totalMin / 1440)
+  const hh = Math.floor((totalMin % 1440) / 60)
+  const mm = totalMin % 60
+  const partes: string[] = []
+  if (d > 0) partes.push(`${d} d`)
+  if (hh > 0) partes.push(`${hh} h`)
+  if (mm > 0 || partes.length === 0) partes.push(`${mm} min`)
+  return partes.join(' ')
+}
+
+// ---- ¿Sobrevive el café tostado? ----
+// El café tostado no se "estropea" rápido si está sellado, pero pierde frescura
+// (desgasificación de CO2 + oxidación + humedad + luz + calor). Esta app traza
+// café VERDE; el tostado se hace al llegar. Si se envía tostado, es una estimación.
+export type NivelSupervivencia = 'optimo' | 'aceptable' | 'degradado' | 'no-recomendado'
+
+export interface EvaluacionCafeTostado {
+  sobrevive: boolean
+  nivel: NivelSupervivencia
+  vidaUtilRestanteH: number
+  mensaje: string
+}
+
+export const FRESCURA_TOSTADO_SELLADO_H = 24 * 14 // ~14 días sellado/aire controlado
+export const FRESCURA_TOSTADO_ABIERTO_H = 24 * 3 // ~3 días abierto
+
+export function evaluarCafeTostado(p: {
+  totalHorasViaje: number
+  sellado?: boolean
+  temperaturaC?: number
+  humedadPct?: number
+  luz?: boolean
+}): EvaluacionCafeTostado {
+  // total no-finito se trata como "no recomendado" sin propagar NaN.
+  const total = Number.isFinite(p.totalHorasViaje) ? Math.max(0, p.totalHorasViaje) : Number.MAX_SAFE_INTEGER
+  const sellado = p.sellado ?? true
+  const temp = Number.isFinite(p.temperaturaC ?? NaN) ? (p.temperaturaC ?? 20) : 20
+  const humedad = Number.isFinite(p.humedadPct ?? NaN) ? (p.humedadPct ?? 60) : 60
+  const luz = p.luz ?? false
+
+  const base = sellado ? FRESCURA_TOSTADO_SELLADO_H : FRESCURA_TOSTADO_ABIERTO_H
+  let penalizacion = 1
+  if (temp > 25) penalizacion *= 1.5 // calor acelera oxidación
+  if (temp >= 35) penalizacion *= 2 // riesgo de deterioro severo
+  if (humedad > 75) penalizacion *= 1.4 // absorción de humedad
+  if (luz) penalizacion *= 1.2 // luz acelera degradación
+  const vidaUtilRestanteH = Math.max(0, +(base / penalizacion - total).toFixed(1))
+
+  // "Sobrevive": sigue siendo seguro/tomable; la frescura puede bajar.
+  const sobrevive = temp < 35 && humedad < 85 && (sellado || total < base) && vidaUtilRestanteH > 0
+
+  let nivel: NivelSupervivencia
+  if (!sobrevive) nivel = 'no-recomendado'
+  else if (vidaUtilRestanteH >= 24 * 7 && total <= 24 && sellado) nivel = 'optimo'
+  else if (vidaUtilRestanteH >= 24) nivel = 'aceptable'
+  else nivel = 'degradado'
+
+  const mensaje =
+    nivel === 'optimo'
+      ? 'Café tostado sellado y fresco: sobrevive el viaje con buena calidad.'
+      : nivel === 'aceptable'
+        ? 'Sobrevive, pero la frescura baja; consumir pronto. Sellado/aire controlado.'
+        : nivel === 'degradado'
+          ? 'Sobrevive a duras penas; frescura reducida. Mejor tostar al llegar.'
+          : 'No recomendado para café tostado con estos tiempos/condiciones. En esta app el café viaja VERDE y se tosta al llegar.'
+
+  return { sobrevive, nivel, vidaUtilRestanteH, mensaje }
 }
 
 export function areaHa(poligono: Coord[]): number {

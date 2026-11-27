@@ -1,5 +1,6 @@
 package com.asoexport.cvb.service;
 
+import com.asoexport.cvb.common.BodyValues;
 import com.asoexport.cvb.common.DataProvenance;
 import com.asoexport.cvb.common.TenantContext;
 import com.asoexport.cvb.domain.*;
@@ -151,13 +152,27 @@ public class FinanceService {
     @Transactional
     public ExchangeRate registerExchangeRate(Map<String, Object> body) {
         ExchangeRate fx = new ExchangeRate();
-        fx.setBaseCurrency(String.valueOf(body.getOrDefault("baseCurrency", "USD")).toUpperCase());
-        fx.setTargetCurrency(String.valueOf(body.get("targetCurrency")).toUpperCase());
-        fx.setRate(new BigDecimal(String.valueOf(body.get("rate"))));
-        fx.setRateDate(body.get("rateDate") != null && !String.valueOf(body.get("rateDate")).isBlank()
-                ? LocalDate.parse(String.valueOf(body.get("rateDate"))) : LocalDate.now());
-        fx.setSourceName(String.valueOf(body.get("sourceName")));
-        fx.setDataProvenance(DataProvenance.valueOf(String.valueOf(body.getOrDefault("dataProvenance", "USER_INPUT"))));
+        String base = BodyValues.text(body, "baseCurrency", "USD").toUpperCase();
+        String target = BodyValues.requiredText(body, "targetCurrency", "targetCurrency").toUpperCase();
+        if (!base.matches("[A-Z]{3}") || !target.matches("[A-Z]{3}")) {
+            throw new IllegalArgumentException("Las monedas deben tener tres letras (USD, COP, EUR…)");
+        }
+        BigDecimal rate = BodyValues.decimal(body, "rate", "rate");
+        if (rate.signum() <= 0) throw new IllegalArgumentException("La tasa debe ser mayor que cero");
+        String source = BodyValues.requiredText(body, "sourceName", "sourceName");
+        if (source.length() > 160) throw new IllegalArgumentException("El nombre de la fuente no puede superar 160 caracteres");
+
+        fx.setBaseCurrency(base);
+        fx.setTargetCurrency(target);
+        fx.setRate(rate);
+        fx.setRateDate(BodyValues.date(body, "rateDate", LocalDate.now()));
+        fx.setSourceName(source);
+        String provenance = BodyValues.text(body, "dataProvenance", "USER_INPUT").toUpperCase();
+        try {
+            fx.setDataProvenance(DataProvenance.valueOf(provenance));
+        } catch (IllegalArgumentException ex) {
+            throw new IllegalArgumentException("Proveniencia de datos no reconocida: " + provenance);
+        }
         return fxRepo.save(fx);
     }
 

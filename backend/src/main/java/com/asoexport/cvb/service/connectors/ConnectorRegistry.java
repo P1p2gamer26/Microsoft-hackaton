@@ -20,7 +20,9 @@ public class ConnectorRegistry {
             @Value("${app.integrations.fda-api-key:}") String fdaKey,
             @Value("${app.integrations.fx-api-url:}") String fxUrl,
             @Value("${app.integrations.osrm-base-url:}") String osrmUrl,
-            @Value("${app.integrations.llm-api-key:}") String llmKey
+            @Value("${app.integrations.llm-enabled:false}") boolean llmEnabled,
+            @Value("${app.integrations.llm-api-key:}") String llmKey,
+            @Value("${app.integrations.llm-api-url:}") String llmUrl
     ) {
         this.connectors = List.of(
                 simple("UN_COMTRADE", "UN Comtrade API", "TRADE", !unComtradeKey.isBlank(),
@@ -39,8 +41,9 @@ public class ConnectorRegistry {
                         "FX_API_URL, FX_API_KEY", "https://www.banrep.gov.co"),
                 simple("OSRM", "OSRM / GraphHopper Ruteo Terrestre", "LOGISTICS", !osrmUrl.isBlank(),
                         "OSRM_BASE_URL o GRAPHHOPPER_API_KEY", "https://project-osrm.org"),
-                simple("LLM_COPILOT", "LLM Export Copilot (Opcional)", "AI", !llmKey.isBlank(),
-                        "LLM_API_URL, LLM_API_KEY, LLM_MODEL", "https://docs.coffeevaluebridge.local/copilot")
+                simple("LLM_COPILOT", "LLM Export Copilot (Opcional)", "AI",
+                        llmEnabled && (!llmKey.isBlank() || !llmUrl.isBlank()),
+                        "LLM_ENABLED=true, LLM_API_URL, LLM_API_KEY, LLM_MODEL", "https://docs.coffeevaluebridge.local/copilot")
         );
     }
 
@@ -72,3 +75,4 @@ public class ConnectorRegistry {
         };
     }
 }
+

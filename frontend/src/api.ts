@@ -3,7 +3,8 @@ import { fincas as fincasDemo, lotes as lotesDemo, type Finca, type Lote } from 
 import type { RegistroOffline } from './offline'
 import type { PersonaId } from './persona'
 
-export const BASE = import.meta.env.VITE_API_URL ?? '/api/v1'
+const API_URL = import.meta.env.VITE_API_URL
+export const BASE = API_URL ? `${API_URL.replace(/\/$/, '')}/api/v1` : '/api/v1'
 const TRAZABILIDAD = '/trazabilidad'
 
 export type Origen = 'api' | 'demo'

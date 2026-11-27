@@ -21,6 +21,17 @@
   flex-wrap: wrap;
 }
 
+.copiloto-respuesta-ia {
+  padding: 14px;
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  background: var(--control);
+  color: var(--texto);
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
 .copiloto-consulta-fecha {
   color: var(--texto-suave);
   font-size: 13px;

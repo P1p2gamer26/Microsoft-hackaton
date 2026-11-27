@@ -1,6 +1,7 @@
 package com.asoexport.cvb.service;
 
 import com.asoexport.cvb.common.ApiException;
+import com.asoexport.cvb.common.BodyValues;
 import com.asoexport.cvb.common.DataProvenance;
 import com.asoexport.cvb.common.TenantContext;
 import com.asoexport.cvb.config.JwtService;
@@ -108,19 +109,19 @@ public class AdminService {
         if (!TenantContext.require().isGeneralAdmin()) {
             throw new ApiException(403, "Solo el Administrador General puede crear usuarios");
         }
-        String email = String.valueOf(body.get("email")).trim().toLowerCase();
+        String email = BodyValues.requiredText(body, "email", "email").toLowerCase();
         if (userRepo.findByEmail(email).isPresent()) {
             throw new ApiException(409, "Ya existe un usuario con ese correo");
         }
-        Role role = roleRepo.findByCode(String.valueOf(body.get("roleCode")))
+        Role role = roleRepo.findByCode(BodyValues.requiredText(body, "roleCode", "roleCode"))
                 .orElseThrow(() -> new ApiException(404, "Rol no encontrado"));
-        Company company = companyRepo.findById(Long.valueOf(String.valueOf(body.get("companyId"))))
+        Company company = companyRepo.findById(BodyValues.id(body, "companyId", "companyId"))
                 .orElseThrow(() -> new ApiException(404, "Empresa no encontrada"));
 
         AppUser u = new AppUser();
         u.setEmail(email);
-        u.setFullName(String.valueOf(body.get("fullName")));
-        u.setPasswordHash(passwordEncoder.encode(String.valueOf(body.getOrDefault("password", "Demo2026!"))));
+        u.setFullName(BodyValues.requiredText(body, "fullName", "fullName"));
+        u.setPasswordHash(passwordEncoder.encode(BodyValues.text(body, "password", "Demo2026!")));
         u.setRole(role);
         u.setPrimaryCompany(company);
         u.setCreatedBy(TenantContext.require().email());
@@ -135,12 +136,13 @@ public class AdminService {
             throw new ApiException(403, "Solo el Administrador General puede registrar empresas");
         }
         Company c = new Company();
-        c.setTaxId(String.valueOf(body.get("taxId")));
-        c.setName(String.valueOf(body.get("name")));
-        c.setLegalName(String.valueOf(body.getOrDefault("legalName", body.get("name"))));
-        c.setCompanyType(String.valueOf(body.getOrDefault("companyType", "EXPORTER")));
-        c.setCity(String.valueOf(body.getOrDefault("city", "")));
-        c.setEmail(String.valueOf(body.getOrDefault("email", "")));
+        String nombre = BodyValues.requiredText(body, "name", "name");
+        c.setTaxId(BodyValues.requiredText(body, "taxId", "taxId"));
+        c.setName(nombre);
+        c.setLegalName(BodyValues.text(body, "legalName", nombre));
+        c.setCompanyType(BodyValues.text(body, "companyType", "EXPORTER"));
+        c.setCity(BodyValues.text(body, "city", ""));
+        c.setEmail(BodyValues.text(body, "email", ""));
         c.setDataProvenance(DataProvenance.USER_INPUT);
         c.setCreatedBy(TenantContext.require().email());
         c = companyRepo.save(c);

@@ -1,5 +1,5 @@
-import { Fragment, lazy, Suspense } from 'react'
-import { BrowserRouter, Link, NavLink, Route, Routes } from 'react-router-dom'
+import { Fragment, lazy, Suspense, useEffect, useState } from 'react'
+import { HashRouter, Link, NavLink, Route, Routes } from 'react-router-dom'
 import OrigenDatos from './componentes/OrigenDatos'
 import SelectorPersona from './componentes/SelectorPersona'
 import { ConsumidorPersona, ProveedorPersona, type ContextoPersona, type PersonaId } from './persona'
@@ -60,6 +60,47 @@ const menu: EntradaMenu[] = [
 
 const centrado = { display: 'grid', placeItems: 'center', minHeight: '100vh', padding: '24px', textAlign: 'center' } as const
 
+type TemaId = 'cafe' | 'claro' | 'blanco-negro'
+const TEMAS: { id: TemaId; etiqueta: string; icono: string; color: string }[] = [
+  { id: 'cafe', etiqueta: 'Café', icono: '☕', color: '#0d0a08' },
+  { id: 'claro', etiqueta: 'Claro', icono: '◯', color: '#f7f2ea' },
+  { id: 'blanco-negro', etiqueta: 'B y N', icono: '◐', color: '#ffffff' },
+]
+
+function SelectorTema() {
+  const [tema, setTema] = useState<TemaId>(() => {
+    try {
+      const guardado = localStorage.getItem('cafetrace-tema')
+      return TEMAS.some(item => item.id === guardado) ? guardado as TemaId : 'cafe'
+    } catch {
+      return 'cafe'
+    }
+  })
+
+  useEffect(() => {
+    document.documentElement.dataset.tema = tema
+    const meta = document.querySelector('meta[name="theme-color"]')
+    if (meta) meta.setAttribute('content', TEMAS.find(item => item.id === tema)?.color ?? '#0d0a08')
+    try { localStorage.setItem('cafetrace-tema', tema) } catch { /* modo privado */ }
+  }, [tema])
+
+  return (
+    <div className="selector-tema" role="group" aria-label="Tema visual">
+      {TEMAS.map(item => (
+        <button
+          key={item.id}
+          type="button"
+          title={`Tema ${item.etiqueta}`}
+          aria-pressed={tema === item.id}
+          onClick={() => setTema(item.id)}
+        >
+          <span aria-hidden>{item.icono}</span> {item.etiqueta}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 const Cargando = () => <div className="vidrio" style={centrado}>Cargando…</div>
 
 const NoEncontrado = () => (
@@ -80,6 +121,7 @@ function Aplicacion({ contexto }: { contexto: ContextoPersona }) {
         <div className="marca"><span aria-hidden>☕</span><strong>CaféTrace</strong></div>
         <SelectorPersona {...contexto} />
         <OrigenDatos />
+        <SelectorTema />
         {menu.filter(entrada => entrada.ven.includes(persona)).map(entrada => (
           <Fragment key={entrada.a}>
             {entrada.seccion && <p className="seccion-menu">{entrada.seccion}</p>}
@@ -123,10 +165,10 @@ function Aplicacion({ contexto }: { contexto: ContextoPersona }) {
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <HashRouter>
       <ProveedorPersona>
         <ConsumidorPersona>{contexto => <Aplicacion contexto={contexto} />}</ConsumidorPersona>
       </ProveedorPersona>
-    </BrowserRouter>
+    </HashRouter>
   )
 }

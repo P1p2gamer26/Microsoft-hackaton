@@ -781,9 +781,28 @@ const COPILOT_Q=[
   "¿Dónde pierdo más tiempo en el ciclo comercial?"
 ];
 let CHAT=[{r:"a",t:"Soy tu analista comercial. Trabajo <b>solo</b> con los datos registrados en tu cuenta (DEMO) y con reglas transparentes. No invento compradores, precios ni estadísticas; cuando falta información, lo digo. ¿En qué te ayudo?",prov:"Fuente: datos internos DEMO · motor de reglas v0"}];
+const AI_URL="http://127.0.0.1:8000";
+let CVB_MODE=localStorage.getItem("cvb_mode")||"ollama";
+let AI_HISTORY=[];
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function fmtAi(s){return esc(s).replace(/\n/g,"<br>");}
+function setAiMode(mode){CVB_MODE=mode;localStorage.setItem("cvb_mode",mode);AI_HISTORY=[];VIEWS.copilot();}
+async function checkAiHealth(){
+  const el=$("#aiStatus");
+  try{
+    const r=await fetch(AI_URL+"/api/health");
+    const j=await r.json();
+    if(el)el.textContent=j.ollama?`Modelo ${esc(j.model)} · ${j.documents} documentos listos`:`Servidor activo, Ollama sin responder (${esc(j.model)})`;
+  }catch(e){if(el)el.textContent="Agente apagado: ejecuta agent\\start.ps1";}
+}
 VIEWS.copilot=function(){
   let html=`
   <div class="card">
+    <div style="display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
+      <span class="pill ${CVB_MODE==='ollama'?'g':'n'}">${CVB_MODE==='ollama'?'IA local · Ollama':'Motor de reglas DEMO'}</span>
+      <button class="btn ghost sm" onclick="setAiMode('${CVB_MODE==='ollama'?'rules':'ollama'}')">Cambiar a ${CVB_MODE==='ollama'?'reglas DEMO':'IA local'}</button>
+      <span class="mini muted" id="aiStatus"></span>
+    </div>
     <div class="chat" id="chat">${CHAT.map(m=>`<div class="msg ${m.r}">${m.t}${m.prov?`<div class="prov">${m.prov}</div>`:""}</div>`).join("")}</div>
     <div class="suggest" style="margin-top:14px">${COPILOT_Q.map(q=>`<button onclick="ask(\`${q}\`)">${q}</button>`).join("")}</div>
     <div style="display:flex;gap:8px;margin-top:12px">
@@ -791,15 +810,40 @@ VIEWS.copilot=function(){
       <button class="btn" onclick="ask($('#chatInput').value)">Enviar</button>
     </div>
   </div>
-  <div class="note" style="margin-top:14px"><span class="i">ℹ️</span><div>Este copiloto es un <b>motor de reglas</b> sobre tus datos, no un modelo que decide por ti. Diferencia hechos, cálculos y recomendaciones, y cita la fuente. No ejecuta acciones comerciales sin tu autorización.</div></div>`;
+  <div class="note" style="margin-top:14px"><span class="i">ℹ️</span><div>En modo <b>IA local</b> las respuestas vienen de Ollama corriendo en tu PC, con acceso a los documentos del repo y a cálculos simples; cita fuentes y no inventa datos. En modo <b>reglas DEMO</b> se usa el motor original sobre datos de demostración. Si el agente no responde, ejecuta <code>agent\start.ps1</code>.</div></div>`;
   $("#view").innerHTML=html;
+  if(CVB_MODE==='ollama')checkAiHealth();
 };
-function ask(q){
-  if(!q||!q.trim())return;
-  CHAT.push({r:"u",t:q});
-  CHAT.push(answer(q));
+async function askLocal(q,idx){
+  try{
+    const res=await fetch(AI_URL+"/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({message:q,history:AI_HISTORY})});
+    const data=await res.json();
+    if(!res.ok)throw new Error(data.error||"Error del agente");
+    const prov=`Fuente: ${(data.sources||[]).join(", ")||"respuesta del modelo"} · ${data.mode||"ia"} · ${data.model||""}`;
+    CHAT[idx]={r:"a",t:fmtAi(data.answer||"(sin respuesta)"),prov:esc(prov)};
+    AI_HISTORY.push({role:"user",content:q},{role:"assistant",content:data.answer||""});
+    if(AI_HISTORY.length>20)AI_HISTORY=AI_HISTORY.slice(-20);
+  }catch(err){
+    CHAT[idx]={r:"a",t:"No pude conectar con el agente local. "+esc(err.message)+". Ejecuta agent\\start.ps1 o cambia a reglas DEMO.",prov:"Fallback local"};
+  }
   VIEWS.copilot();
   setTimeout(()=>{const c=$("#chat");if(c)c.scrollTop=c.scrollHeight;},10);
+}
+function ask(q){
+  if(!q||!q.trim())return;
+  CHAT.push({r:"u",t:esc(q)});
+  if(CVB_MODE==="ollama"){
+    CHAT.push({r:"a",t:"<span class='muted'>Pensando con IA local…</span>"});
+    const idx=CHAT.length-1;
+    VIEWS.copilot();
+    setTimeout(()=>{const c=$("#chat");if(c)c.scrollTop=c.scrollHeight;},10);
+    askLocal(q.trim(),idx);
+  }else{
+    CHAT.push(answer(q));
+    VIEWS.copilot();
+    setTimeout(()=>{const c=$("#chat");if(c)c.scrollTop=c.scrollHeight;},10);
+  }
 }
 function answer(q){
   const l=q.toLowerCase();

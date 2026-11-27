@@ -296,6 +296,23 @@
   box-shadow: 0 0 0 2px #fff3d0;
 }
 
+.leyenda-carrito,
+.leyenda-avion {
+  width: 14px !important;
+  height: 14px !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  font-size: 13px;
+  line-height: 14px;
+  text-align: center;
+}
+
+.leyenda-destino {
+  border-radius: 50% !important;
+  background: var(--ambar);
+  box-shadow: 0 0 0 2px var(--texto);
+}
+
 .controles-mapa {
   position: absolute;
   z-index: 3;

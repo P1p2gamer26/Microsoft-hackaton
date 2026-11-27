@@ -599,6 +599,9 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private Country saveCountry(String iso2, String iso3, String es, String en, String reg, String cur, double tariff, double regScore, double lat, double lon) {
+        // Idempotente: Flyway (V2__demo_seed) ya puede haber sembrado este país.
+        Optional<Country> existing = countryRepo.findByIso2(iso2);
+        if (existing.isPresent()) return existing.get();
         Country c = new Country();
         c.setIso2(iso2); c.setIso3(iso3); c.setNameEs(es); c.setNameEn(en); c.setRegion(reg);
         c.setCurrencyCode(cur); c.setDefaultTariffPct(BigDecimal.valueOf(tariff));
@@ -632,6 +635,9 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private Port savePort(String code, String name, Country country, String city, String type, boolean col, double handling, double lat, double lon) {
+        // Idempotente: Flyway (V2__demo_seed) ya puede haber sembrado este puerto.
+        Optional<Port> existing = portRepo.findByCode(code);
+        if (existing.isPresent()) return existing.get();
         Port p = new Port();
         p.setCode(code); p.setName(name); p.setCountry(country); p.setCityName(city);
         p.setPortType(type); p.setOriginColombia(col); p.setAvgHandlingDays(BigDecimal.valueOf(handling));
