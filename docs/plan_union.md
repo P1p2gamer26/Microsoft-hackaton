@@ -1,5 +1,7 @@
 # Plan de unión: un solo producto
 
+> **Actualización:** el estado real tras el merge y el deploy está en `PLAN_INTEGRACION_FINAL.md`. Este documento conserva la visión original.
+
 Hoy hay dos productos en el repo:
 
 | | CaféTrace (rama `julian/frontend-3d`) | Coffee Value Bridge (`main`, carpeta `coffee-value-bridge - Copy/`) |

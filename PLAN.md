@@ -130,3 +130,7 @@ GitHub Pages quedó descartado: el proyecto necesita **Spring Boot + base de dat
 - `cvb-hackaton-db`: Postgres free 16, privada, con `postgis` y `uuid-ossp`.
 
 Detalles y pasos de configuración en `DEPLOY.md`.
+
+## 12. Integración CaféTrace + Coffee Value Bridge
+
+Plan de integración actualizado (estado real, tandas y criterios de aceptación): `docs/PLAN_INTEGRACION_FINAL.md`.
