@@ -75,6 +75,7 @@ curl -X POST https://cvb-hackaton-api.onrender.com/api/v1/auth/login \
 
 - Render Postgres **free**, versión 16, con PostGIS.
 - Flyway ejecuta `V1__schema_postgis.sql` y `V2__demo_seed_postgis.sql` automáticamente en el primer arranque del backend.
+- Render entrega la URL como `postgresql://...`; `backend/docker-entrypoint.sh` la convierte a `jdbc:postgresql://...` antes de arrancar Spring Boot. `SPRING_JPA_HIBERNATE_DDL_AUTO=update` evita fallos de validación de esquema en la demo.
 - `ipAllowList: []` = la BD no es accesible desde internet, solo desde los servicios de Render.
 - Si quieres conectarte con `psql` desde tu PC, cambia `ipAllowList` para incluir tu IP pública.
 - La BD free **expira a los 30 días**: hay que renovarla o subir a un plan pago antes de esa fecha.
