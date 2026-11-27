@@ -7,6 +7,7 @@ import './Campo.css'
 
 type Pantalla = 'inicio' | 'finca' | 'entrega' | 'lotes'
 type PuntoVisual = { x: number; y: number }
+type ResumenFinca = { hectareas: number; puntos: number; simulado: boolean }
 type ResultadoVoz = { 0: { transcript: string }; isFinal: boolean }
 type EventoVoz = { results: ArrayLike<ResultadoVoz>; resultIndex: number }
 type EventoErrorVoz = { error: string }
@@ -94,11 +95,14 @@ export default function Campo() {
   const [cola, setCola] = useState<RegistroOffline[]>(() => leerCola())
   const [sincronizando, setSincronizando] = useState(false)
   const [marcando, setMarcando] = useState(false)
+  const [fincaGuardada, setFincaGuardada] = useState<ResumenFinca | null>(null)
   const [puntos, setPuntos] = useState<Coord[]>([])
   const [puntosSimulados, setPuntosSimulados] = useState<boolean[]>([])
   const [texto, setTexto] = useState('')
+  const [origenEntrega, setOrigenEntrega] = useState<'voz' | 'texto'>('voz')
   const [escuchando, setEscuchando] = useState(false)
   const [mensaje, setMensaje] = useState('')
+  const [errorGuardar, setErrorGuardar] = useState('')
   const reconocedorRef = useRef<ReconocedorVoz | null>(null)
 
   const enLinea = conLineaReal && !simularSinSenal
@@ -154,6 +158,7 @@ export default function Campo() {
   const ir = (destino: Pantalla) => {
     setPantalla(destino)
     setMensaje('')
+    setErrorGuardar('')
   }
 
   const agregarPunto = () => {
@@ -195,7 +200,8 @@ export default function Campo() {
       return
     }
     setMarcando(false)
-    setMensaje('Finca guardada en el celular')
+    setFincaGuardada({ hectareas, puntos: puntos.length, simulado: haySimulados })
+    setMensaje('')
   }
 
   const dictar = () => {
@@ -214,13 +220,15 @@ export default function Campo() {
         .join(' ')
         .trim()
       setTexto(transcrito)
+      setOrigenEntrega('voz')
+      setErrorGuardar('')
       setMensaje('Dictado listo')
     }
     reconocedor.onerror = evento => {
       setEscuchando(false)
       setMensaje(
         evento.error === 'network'
-          ? 'Sin señal la voz no funciona: escribe la entrega o usa Usar ejemplo'
+          ? 'Sin señal la voz no funciona: escribe la entrega o usa Modo demo: usar ejemplo'
           : 'No se pudo escuchar',
       )
     }
@@ -233,18 +241,21 @@ export default function Campo() {
   const usarEjemplo = () => {
     const ejemplo = 'Entregué 12 arrobas de castillo, secado al 11 por ciento'
     setTexto(ejemplo)
+    setOrigenEntrega('texto')
+    setErrorGuardar('')
     setMensaje('Ejemplo listo')
   }
 
   const registrarEntrega = () => {
     if (!texto.trim()) {
-      setMensaje('Dicta o escribe la entrega')
+      setErrorGuardar('Dicta o escribe la entrega')
       return
     }
     if (!entrega || faltaCantidad) {
-      setMensaje('Falta la cantidad')
+      setErrorGuardar('Falta la cantidad')
       return
     }
+    setErrorGuardar('')
     const datos: Record<string, unknown> = { texto }
     if (entrega.arrobas !== null) datos.arrobas = entrega.arrobas
     if (entrega.kg !== null) datos.kg = entrega.kg
@@ -294,17 +305,18 @@ export default function Campo() {
           <div className="campo-contenido">
             {pantalla === 'inicio' && (
               <div className="campo-inicio">
-                <label className="campo-interruptor">
-                  <input
-                    type="checkbox"
-                    checked={simularSinSenal}
-                    onChange={evento => setSimularSinSenal(evento.target.checked)}
-                  />
+                <button
+                  type="button"
+                  className="campo-interruptor"
+                  role="switch"
+                  aria-checked={simularSinSenal}
+                  onClick={() => setSimularSinSenal(actual => !actual)}
+                >
                   <span className="campo-interruptor-track" aria-hidden="true">
                     <span className="campo-interruptor-dot" />
                   </span>
                   <span>Simular sin señal</span>
-                </label>
+                </button>
 
                 <div className="campo-acciones">
                   <button
@@ -313,6 +325,7 @@ export default function Campo() {
                       setPuntos([])
                       setPuntosSimulados([])
                       setMarcando(false)
+                      setFincaGuardada(null)
                       ir('finca')
                     }}
                   >
@@ -369,12 +382,34 @@ export default function Campo() {
                     <button className="boton campo-boton-grande" onClick={agregarPunto}>＋ Agregar punto</button>
                     <button className="boton-fantasma campo-boton-grande" onClick={terminarFinca} disabled={puntos.length < 3}>✓ Terminar</button>
                   </div>
+                ) : fincaGuardada ? (
+                  <div className="vidrio campo-exito" role="status">
+                    <strong>
+                      ✓ Finca guardada · {fincaGuardada.hectareas.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ha · {fincaGuardada.puntos} puntos
+                    </strong>
+                    {fincaGuardada.simulado && (
+                      <span className="campo-aviso-simulado">Puntos de ejemplo</span>
+                    )}
+                    <button
+                      className="boton-fantasma campo-boton-grande"
+                      onClick={() => {
+                        setPuntos([])
+                        setPuntosSimulados([])
+                        setFincaGuardada(null)
+                        setMarcando(true)
+                        setMensaje('')
+                      }}
+                    >
+                      Marcar otra vez
+                    </button>
+                  </div>
                 ) : (
                   <button
                     className="boton campo-boton-grande"
                     onClick={() => {
                       setPuntos([])
                       setPuntosSimulados([])
+                      setFincaGuardada(null)
                       setMarcando(true)
                       setMensaje('')
                     }}
@@ -400,28 +435,42 @@ export default function Campo() {
                   rows={4}
                   value={texto}
                   placeholder="Entregué 12 arrobas de castillo, secado al 11 por ciento"
-                  onChange={evento => setTexto(evento.target.value)}
+                  onChange={evento => {
+                    setTexto(evento.target.value)
+                    setOrigenEntrega('texto')
+                    setErrorGuardar('')
+                  }}
                   aria-label="Texto de la entrega"
                 />
-                <button className="boton-fantasma campo-boton-pequeno" onClick={usarEjemplo}>Usar ejemplo</button>
-                <button className="boton campo-boton-grande" onClick={registrarEntrega} disabled={faltaCantidad}>
-                  ✓ Guardar entrega
-                </button>
+                <button className="campo-demo" onClick={usarEjemplo}>Modo demo: usar ejemplo</button>
+                <div className="campo-guardar">
+                  <button className="boton campo-boton-grande" onClick={registrarEntrega}>
+                    ✓ Guardar entrega
+                  </button>
+                  {errorGuardar && (
+                    <p className="campo-error-guardar" role="alert">{errorGuardar}</p>
+                  )}
+                </div>
                 {entrega && (
-                  <div className="vidrio campo-confirmacion">
-                    <strong>✅ Confirmación</strong>
-                    <div className="campo-campos">
-                      <span>Arrobas</span><b>{entrega.arrobas ?? '—'}</b>
-                      <span>Kilogramos</span><b>{entrega.kg ?? '—'}</b>
-                      <span>Variedad</span><b>{entrega.variedad ?? '—'}</b>
-                      <span>Humedad</span><b>{entrega.humedad === null ? '—' : `${entrega.humedad} %`}</b>
+                  <>
+                    <span className="chip chip-ia">
+                      IA · lectura de {origenEntrega === 'voz' ? 'voz' : 'texto'}
+                    </span>
+                    <div className="vidrio campo-confirmacion">
+                      <strong>✅ Confirmación</strong>
+                      <div className="campo-campos">
+                        <span>Arrobas</span><b>{entrega.arrobas ?? '—'}</b>
+                        <span>Kilogramos</span><b>{entrega.kg ?? '—'}</b>
+                        <span>Variedad</span><b>{entrega.variedad ?? '—'}</b>
+                        <span>Humedad</span><b>{entrega.humedad === null ? '—' : `${entrega.humedad} %`}</b>
+                      </div>
+                      {entrega.faltantes.map(campo => (
+                        <p className="campo-pregunta" key={campo}>
+                          {preguntasFaltantes[campo] ?? `¿Cuál es ${campo}?`}
+                        </p>
+                      ))}
                     </div>
-                    {entrega.faltantes.map(campo => (
-                      <p className="campo-pregunta" key={campo}>
-                        {preguntasFaltantes[campo] ?? `¿Cuál es ${campo}?`}
-                      </p>
-                    ))}
-                  </div>
+                  </>
                 )}
                 {mensaje && <p className="campo-mensaje">{mensaje}</p>}
               </div>

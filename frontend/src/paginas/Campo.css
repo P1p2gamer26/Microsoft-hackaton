@@ -96,20 +96,15 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  width: 100%;
   padding: 10px 12px;
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--borde);
-  font-size: 13px;
+  text-align: left;
+  font-size: 14px;
   color: var(--texto-suave);
   cursor: pointer;
-}
-
-.campo-interruptor input {
-  position: absolute;
-  opacity: 0;
-  width: 1px;
-  height: 1px;
 }
 
 .campo-interruptor-track {
@@ -131,9 +126,9 @@
   transition: transform 0.2s ease;
 }
 
-.campo-interruptor input:checked + .campo-interruptor-track { background: var(--cafe); }
-.campo-interruptor input:checked + .campo-interruptor-track .campo-interruptor-dot { transform: translateX(18px); }
-.campo-interruptor input:focus-visible + .campo-interruptor-track { outline: 2px solid var(--cafe-claro); outline-offset: 2px; }
+.campo-interruptor[aria-checked='true'] .campo-interruptor-track { background: var(--cafe); }
+.campo-interruptor[aria-checked='true'] .campo-interruptor-dot { transform: translateX(18px); }
+.campo-interruptor:focus-visible { outline: 2px solid var(--cafe-claro); outline-offset: 2px; }
 
 .campo-acciones {
   display: grid;
@@ -216,10 +211,23 @@
   font-size: 17px;
 }
 
-.campo-boton-pequeno {
-  align-self: flex-start;
-  min-height: 44px;
-  font-size: 13px;
+.campo-exito {
+  padding: 18px;
+  border-radius: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.campo-exito strong {
+  font-size: 17px;
+  line-height: 1.4;
+  color: var(--verde);
+}
+
+.campo-exito .campo-aviso-simulado {
+  font-size: 14px;
+  font-weight: 600;
 }
 
 .campo button:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -240,6 +248,14 @@
 
 .campo-textarea::placeholder { color: rgba(184, 168, 152, 0.7); }
 
+.chip-ia {
+  align-self: flex-start;
+  background: rgba(200, 135, 90, 0.2);
+  color: var(--cafe-claro);
+  font-size: 13px;
+  font-weight: 700;
+}
+
 .campo-confirmacion {
   padding: 14px;
   border-radius: 18px;
@@ -259,10 +275,42 @@
 .campo-campos b { text-align: right; }
 
 .campo-pregunta {
-  margin: 8px 0 0;
-  font-size: 12px;
-  color: #fbbf24;
+  margin: 16px 0 0;
+  padding-left: 10px;
+  border-left: 3px solid var(--ambar);
+  font-size: clamp(17px, 4.6vw, 20px);
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--ambar);
 }
+
+.campo-guardar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.campo-error-guardar {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--rojo);
+}
+
+.campo-demo {
+  align-self: flex-start;
+  min-height: 32px;
+  padding: 4px 2px;
+  border: 0;
+  background: transparent;
+  color: var(--texto-suave);
+  font-size: 12px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.campo-demo:hover { color: var(--texto); }
 
 .campo-aviso-simulado { color: #fbbf24; }
 
@@ -333,7 +381,63 @@
   color: var(--texto-suave);
 }
 
-@media (max-width: 760px) {
-  .campo { padding: 16px 8px 24px; justify-content: flex-start; }
-  .campo-telefono { width: min(390px, calc(100vw - 16px)); height: min(780px, calc(100vh - 110px)); }
+@media (max-width: 767px) {
+  .campo {
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: 0;
+    justify-content: flex-start;
+    gap: 0;
+  }
+
+  .campo-telefono {
+    width: 100%;
+    max-width: none;
+    height: 100vh;
+    height: 100dvh;
+    max-height: none;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .campo-notch,
+  .campo-nota { display: none; }
+
+  .campo-pantalla {
+    border-radius: 0;
+    background:
+      radial-gradient(circle at 90% 0%, rgba(200, 135, 90, 0.14), transparent 45%),
+      linear-gradient(180deg, #1a130f, #100b08);
+  }
+
+  .campo-cabecera { padding: 18px 16px 6px; }
+  .campo-estados { padding: 0 16px 8px; }
+  .campo-contenido { padding: 0 16px 92px; gap: 12px; }
+  .campo-inicio,
+  .campo-interna { gap: 12px; }
+
+  .campo-mapa {
+    display: block;
+    width: auto;
+    max-width: 100%;
+    height: clamp(118px, 18vh, 150px);
+    margin: 0 auto;
+  }
+
+  .campo-boton-grande { min-height: 56px; }
+
+  .campo-barra {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 5;
+    padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+    background: #120c09;
+  }
+
+  .campo-barra button { min-height: 48px; }
 }
