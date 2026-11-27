@@ -11,14 +11,15 @@ import {
   colorEstado,
   etiquetaEstado,
   estiloSatelite,
-  fincas,
+  fincas as fincasDemo,
   lugares,
-  lotes,
   puertos,
   rutaHuilaBuenaventura,
   type Coord,
   type Finca,
 } from '../datos'
+import { obtenerFincas, useDatos } from '../api'
+import { useLotes } from '../registro'
 import './Mapa3D.css'
 
 const COLOMBIA: Coord = [-73.6, 4.6]
@@ -49,8 +50,14 @@ const relleno = () => window.innerWidth >= 760
   ? { left: 380, top: 0, right: 0, bottom: 0 }
   : { left: 0, top: 0, right: 0, bottom: 240 }
 
-const totalKg =lotes.reduce((s, l) => s + l.kg, 0)
-const pctCumple = Math.round((fincas.filter(f => f.estado === 'cumple').length / fincas.length) * 100)
+const fincasGeo = (lista: Finca[]) => ({
+  type: 'FeatureCollection' as const,
+  features: lista.map(f => ({
+    type: 'Feature' as const,
+    geometry: { type: 'Polygon' as const, coordinates: [f.poligono] },
+    properties: { id: f.id, nombre: f.nombre, estado: f.estado },
+  })),
+})
 
 const segmentosRuta = rutaHuilaBuenaventura.slice(0, -1).map((a, i) => {
   const b = rutaHuilaBuenaventura[i + 1]
@@ -90,6 +97,19 @@ export default function Mapa3D() {
   const [seleccion, setSeleccion] = useState<Finca | null>(null)
   const [panelAbierto, setPanelAbierto] = useState(() => window.innerWidth >= 760)
   const [sinMapa, setSinMapa] = useState(false)
+  // Fincas y lotes del backend; mientras no responda, los de ejemplo
+  const { datos: fincasApi } = useDatos(obtenerFincas)
+  const fincas = fincasApi ?? fincasDemo
+  const lotes = useLotes()
+  const fincasRef = useRef(fincas)
+  fincasRef.current = fincas
+  const totalKg = lotes.reduce((s, l) => s + l.kg, 0)
+  const pctCumple = fincas.length ? Math.round((fincas.filter(f => f.estado === 'cumple').length / fincas.length) * 100) : 0
+
+  useEffect(() => {
+    const fuente = mapaRef.current?.getSource('fincas') as GeoJSONSource | undefined
+    fuente?.setData(fincasGeo(fincas))
+  }, [fincas])
 
   const cancelarVueloInicial = useCallback(() => {
     if (inicioRef.current !== null) {
@@ -190,17 +210,7 @@ export default function Mapa3D() {
       window.clearTimeout(temporizador)
       setSinMapa(false)
 
-      mapa.addSource('fincas', {
-        type: 'geojson',
-        data: {
-          type: 'FeatureCollection',
-          features: fincas.map(f => ({
-            type: 'Feature' as const,
-            geometry: { type: 'Polygon' as const, coordinates: [f.poligono] },
-            properties: { id: f.id, nombre: f.nombre, estado: f.estado },
-          })),
-        },
-      })
+      mapa.addSource('fincas', { type: 'geojson', data: fincasGeo(fincasRef.current) })
       mapa.addSource('puertos', {
         type: 'geojson',
         data: {
@@ -347,7 +357,7 @@ export default function Mapa3D() {
 
       const abrirFinca = (e: maplibregl.MapMouseEvent & { features?: maplibregl.GeoJSONFeature[] }) => {
         const id = String(e.features?.[0]?.properties?.id ?? '')
-        const f = fincas.find(x => x.id === id)
+        const f = fincasRef.current.find(x => x.id === id)
         if (f) seleccionarFinca(f)
       }
       for (const capa of ['fincas-relleno', 'fincas-riesgo', 'fincas-contorno', 'fincas-seleccion']) {

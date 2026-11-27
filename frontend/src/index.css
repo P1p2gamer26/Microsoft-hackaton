@@ -53,6 +53,8 @@ a { color: inherit; }
 .enlace:hover { background: rgba(255, 255, 255, 0.04); color: var(--texto); }
 .enlace.active { background: rgba(200, 135, 90, 0.14); color: var(--texto); }
 .contenido { min-width: 0; }
+.seccion-menu { margin: 14px 12px 4px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--cafe-claro); }
+.lateral { overflow-y: auto; max-height: 100vh; position: sticky; top: 0; }
 
 @media (max-width: 760px), (prefers-reduced-motion: reduce) {
   /* ponytail: el desenfoque cuesta mucho en celulares gama media; fondo sólido en su lugar */

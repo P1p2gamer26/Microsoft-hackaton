@@ -285,3 +285,55 @@ export function useDatos<T>(cargador: () => Promise<Resultado<T>>, deps: unknown
 
   return estado
 }
+
+// ---- Módulo comercial (endpoints de Coffee Value Bridge) ----
+// A diferencia de cargar(), aquí no hay datos de respaldo: si el backend no responde, la página muestra el error.
+export async function pedir<T>(ruta: string, init: RequestInit = {}, tiempo = 10000): Promise<T> {
+  const hacer = async () => {
+    const cabeceras = new Headers(init.headers)
+    if (init.body && !(init.body instanceof FormData) && !cabeceras.has('Content-Type')) {
+      cabeceras.set('Content-Type', 'application/json')
+    }
+    if (token) cabeceras.set('Authorization', `Bearer ${token}`)
+    const respuesta = await fetch(`${BASE}${ruta}`, { ...init, headers: cabeceras, signal: AbortSignal.timeout(tiempo) })
+    const texto = await respuesta.text()
+    let cuerpo: unknown = null
+    try { cuerpo = texto ? JSON.parse(texto) : null } catch { cuerpo = texto }
+    if (!respuesta.ok) {
+      const mensaje = typeof cuerpo === 'object' && cuerpo && 'message' in cuerpo ? String((cuerpo as { message: unknown }).message) : `Error ${respuesta.status}`
+      throw Object.assign(new Error(mensaje), { status: respuesta.status })
+    }
+    publicarOrigen('api')
+    return cuerpo as T
+  }
+  try {
+    return await hacer()
+  } catch (error) {
+    if (estadoDe(error) === 401 && credenciales && (await iniciarSesion(credenciales.email, credenciales.password))) return hacer()
+    if (error instanceof DOMException || error instanceof TypeError) throw new Error('El backend no responde. Arráncalo con iniciar-demo.ps1')
+    throw error
+  }
+}
+
+export const enviarJson = <T>(ruta: string, cuerpo: unknown, metodo = 'POST') =>
+  pedir<T>(ruta, { method: metodo, body: JSON.stringify(cuerpo ?? {}) })
+
+// Carga un endpoint y vuelve a cargar al cambiar la persona o la sesión. ruta null = no cargar.
+export function usePedido<T>(ruta: string | null): EstadoDatos<T> & { recargar: () => void } {
+  const persona = useSyncExternalStore(suscribirsePersona, obtenerPersonaActiva, obtenerPersonaActiva)
+  const sesion = useSyncExternalStore(suscribirseSesion, obtenerVersionSesion, obtenerVersionSesion)
+  const [vuelta, setVuelta] = useState(0)
+  const [estado, setEstado] = useState<EstadoDatos<T>>({ datos: null, origen: 'api', cargando: ruta !== null, error: null })
+
+  useEffect(() => {
+    if (ruta === null) return
+    let activo = true
+    setEstado(anterior => ({ ...anterior, cargando: true, error: null }))
+    pedir<T>(ruta)
+      .then(datos => { if (activo) setEstado({ datos, origen: 'api', cargando: false, error: null }) })
+      .catch(error => { if (activo) setEstado(anterior => ({ ...anterior, cargando: false, error: error instanceof Error ? error : new Error(String(error)) })) })
+    return () => { activo = false }
+  }, [ruta, persona, sesion, vuelta])
+
+  return { ...estado, recargar: () => setVuelta(v => v + 1) }
+}
