@@ -89,6 +89,7 @@ export default function Mapa3D() {
   const seleccionRef = useRef<Finca | null>(null)
   const [seleccion, setSeleccion] = useState<Finca | null>(null)
   const [panelAbierto, setPanelAbierto] = useState(() => window.innerWidth >= 760)
+  const [sinMapa, setSinMapa] = useState(false)
 
   const cancelarVueloInicial = useCallback(() => {
     if (inicioRef.current !== null) {
@@ -123,6 +124,49 @@ export default function Mapa3D() {
     vivoRef.current = true
     if (!contenedorRef.current) return
 
+    const reducirMovimiento = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    let ultimoFrame = 0
+    let puntoSource: GeoJSONSource | undefined
+    let cargado = false
+    let huboError = false
+
+    if (!navigator.onLine) setSinMapa(true)
+    const temporizador = window.setTimeout(() => {
+      if (!cargado && vivoRef.current) setSinMapa(true)
+    }, 12000)
+
+    const animar = (tiempo: number) => {
+      if (!vivoRef.current || !mapaRef.current || document.hidden) {
+        rafRef.current = null
+        return
+      }
+      if (tiempo - ultimoFrame < 66) {
+        rafRef.current = requestAnimationFrame(animar)
+        return
+      }
+      ultimoFrame = tiempo
+      const pulso = 0.3 + 0.7 * (0.5 + 0.5 * Math.sin(tiempo / 420))
+      mapaRef.current.setPaintProperty('fincas-riesgo', 'fill-extrusion-opacity', pulso)
+      puntoSource?.setData(puntoGeo(puntoEnRuta((tiempo % 12000) / 12000)))
+      rafRef.current = requestAnimationFrame(animar)
+    }
+
+    const iniciarAnimacion = () => {
+      if (reducirMovimiento || document.hidden || !cargado || rafRef.current !== null) return
+      ultimoFrame = 0
+      rafRef.current = requestAnimationFrame(animar)
+    }
+
+    const alCambiarVisibilidad = () => {
+      if (document.hidden) {
+        if (rafRef.current !== null) cancelAnimationFrame(rafRef.current)
+        rafRef.current = null
+      } else {
+        iniciarAnimacion()
+      }
+    }
+    document.addEventListener('visibilitychange', alCambiarVisibilidad)
+
     const mapa = new maplibregl.Map({
       container: contenedorRef.current,
       style: {
@@ -137,8 +181,15 @@ export default function Mapa3D() {
     })
     mapaRef.current = mapa
 
+    mapa.on('error', () => {
+      huboError = true
+      if (vivoRef.current) setSinMapa(true)
+    })
     mapa.on('load', () => {
       if (!vivoRef.current) return
+      cargado = true
+      window.clearTimeout(temporizador)
+      if (!huboError && navigator.onLine) setSinMapa(false)
 
       mapa.addSource('fincas', {
         type: 'geojson',
@@ -310,18 +361,16 @@ export default function Mapa3D() {
 
       inicioRef.current = window.setTimeout(() => {
         if (!vivoRef.current || seleccionRef.current || tourActivoRef.current) return
-        mapa.flyTo({ center: PITALITO, zoom: 12.6, pitch: 60, bearing: -20, duration: 6000, padding: relleno(), essential: true })
+        mapa.flyTo({ center: PITALITO, zoom: 12.6, pitch: 60, bearing: -20, duration: reducirMovimiento ? 0 : 6000, padding: relleno(), essential: true })
       }, 700)
 
-      const puntoSource = mapa.getSource('punto-ruta') as GeoJSONSource | undefined
-      const animar = (tiempo: number) => {
-        if (!vivoRef.current || !mapaRef.current) return
-        const pulso = 0.3 + 0.7 * (0.5 + 0.5 * Math.sin(tiempo / 420))
-        mapa.setPaintProperty('fincas-riesgo', 'fill-extrusion-opacity', pulso)
-        puntoSource?.setData(puntoGeo(puntoEnRuta((tiempo % 12000) / 12000)))
-        rafRef.current = requestAnimationFrame(animar)
+      puntoSource = mapa.getSource('punto-ruta') as GeoJSONSource | undefined
+      if (reducirMovimiento) {
+        mapa.setPaintProperty('fincas-riesgo', 'fill-extrusion-opacity', 1)
+        puntoSource?.setData(puntoGeo(rutaHuilaBuenaventura[0]))
+      } else {
+        iniciarAnimacion()
       }
-      rafRef.current = requestAnimationFrame(animar)
     })
 
     recorrerRef.current = () => {
@@ -356,7 +405,10 @@ export default function Mapa3D() {
     return () => {
       vivoRef.current = false
       tourActivoRef.current = false
+      document.removeEventListener('visibilitychange', alCambiarVisibilidad)
+      window.clearTimeout(temporizador)
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current)
+      rafRef.current = null
       if (inicioRef.current !== null) window.clearTimeout(inicioRef.current)
       recorrerRef.current = () => {}
       mapaRef.current?.remove()
@@ -368,6 +420,13 @@ export default function Mapa3D() {
     <section className="mapa-contenedor" aria-label="Mapa 3D de trazabilidad del café">
       <div ref={contenedorRef} className="mapa-lienzo" />
       <div className="mapa-velo" aria-hidden />
+
+      {sinMapa && (
+        <div className="aviso-mapa vidrio" role="alert">
+          <p>No se pudo cargar el mapa satelital. Revisa la conexión.</p>
+          <button type="button" className="boton" onClick={() => window.location.reload()}>Reintentar</button>
+        </div>
+      )}
 
       <aside className={`panel-mapa vidrio${panelAbierto ? '' : ' panel-colapsado'}`}>
         <button

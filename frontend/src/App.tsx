@@ -1,10 +1,12 @@
-import { BrowserRouter, NavLink, Route, Routes } from 'react-router-dom'
-import Mapa3D from './paginas/Mapa3D'
-import Campo from './paginas/Campo'
-import Acopio from './paginas/Acopio'
-import Cumplimiento from './paginas/Cumplimiento'
-import Lote from './paginas/Lote'
-import Ayuda from './paginas/Ayuda'
+import { lazy, Suspense } from 'react'
+import { BrowserRouter, Link, NavLink, Route, Routes } from 'react-router-dom'
+
+const Mapa3D = lazy(() => import('./paginas/Mapa3D'))
+const Campo = lazy(() => import('./paginas/Campo'))
+const Acopio = lazy(() => import('./paginas/Acopio'))
+const Cumplimiento = lazy(() => import('./paginas/Cumplimiento'))
+const Lote = lazy(() => import('./paginas/Lote'))
+const Ayuda = lazy(() => import('./paginas/Ayuda'))
 
 const menu = [
   { a: '/', t: 'Mapa 3D', s: 'Fincas y rutas' },
@@ -14,6 +16,19 @@ const menu = [
   { a: '/lote/LT-2026-0412', t: 'Pasaporte del lote', s: 'Anke · compradora' },
   { a: '/ayuda', t: 'Cómo funciona', s: 'Guía de la solución' },
 ]
+
+const centrado = { display: 'grid', placeItems: 'center', minHeight: '100vh', padding: '24px', textAlign: 'center' } as const
+
+const Cargando = () => <div className="vidrio" style={centrado}>Cargando…</div>
+
+const NoEncontrado = () => (
+  <div className="vidrio" style={centrado}>
+    <div>
+      <h1>Página no encontrada</h1>
+      <p><Link to="/">Volver al mapa</Link></p>
+    </div>
+  </div>
+)
 
 export default function App() {
   return (
@@ -28,14 +43,17 @@ export default function App() {
           ))}
         </nav>
         <main className="contenido">
-          <Routes>
-            <Route path="/" element={<Mapa3D />} />
-            <Route path="/campo" element={<Campo />} />
-            <Route path="/acopio" element={<Acopio />} />
-            <Route path="/cumplimiento" element={<Cumplimiento />} />
-            <Route path="/lote/:id" element={<Lote />} />
-            <Route path="/ayuda" element={<Ayuda />} />
-          </Routes>
+          <Suspense fallback={<Cargando />}>
+            <Routes>
+              <Route path="/" element={<Mapa3D />} />
+              <Route path="/campo" element={<Campo />} />
+              <Route path="/acopio" element={<Acopio />} />
+              <Route path="/cumplimiento" element={<Cumplimiento />} />
+              <Route path="/lote/:id" element={<Lote />} />
+              <Route path="/ayuda" element={<Ayuda />} />
+              <Route path="*" element={<NoEncontrado />} />
+            </Routes>
+          </Suspense>
         </main>
       </div>
     </BrowserRouter>
