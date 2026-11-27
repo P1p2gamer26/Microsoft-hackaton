@@ -5,6 +5,9 @@ import Acopio from './paginas/Acopio'
 import Cumplimiento from './paginas/Cumplimiento'
 import Lote from './paginas/Lote'
 import Ayuda from './paginas/Ayuda'
+import Compradores from './paginas/Compradores'
+import Gobernanza from './paginas/Gobernanza'
+import Impacto from './paginas/Impacto'
 
 const menu = [
   { a: '/', t: 'Mapa 3D', s: 'Fincas y rutas' },
@@ -12,6 +15,9 @@ const menu = [
   { a: '/acopio', t: 'Acopio', s: 'Hernán · cooperativa' },
   { a: '/cumplimiento', t: 'Cumplimiento', s: 'Laura · exportadora' },
   { a: '/lote/LT-2026-0412', t: 'Pasaporte del lote', s: 'Anke · compradora' },
+  { a: '/compradores', t: 'Compradores', s: 'Del lote trazado a la venta' },
+  { a: '/gobernanza', t: 'Gobernanza', s: 'Consentimiento y acceso' },
+  { a: '/impacto', t: 'Impacto', s: 'Hoja de ruta y modelo' },
   { a: '/ayuda', t: 'Cómo funciona', s: 'Guía de la solución' },
 ]
 
@@ -34,6 +40,9 @@ export default function App() {
             <Route path="/acopio" element={<Acopio />} />
             <Route path="/cumplimiento" element={<Cumplimiento />} />
             <Route path="/lote/:id" element={<Lote />} />
+            <Route path="/compradores" element={<Compradores />} />
+            <Route path="/gobernanza" element={<Gobernanza />} />
+            <Route path="/impacto" element={<Impacto />} />
             <Route path="/ayuda" element={<Ayuda />} />
           </Routes>
         </main>
