@@ -127,6 +127,8 @@ def respond(message: str, history: object) -> dict:
                 messages.append(
                     {
                         "role": "tool",
+                        "name": name,
+                        "tool_name": name,
                         "content": json.dumps(result, ensure_ascii=False),
                     }
                 )

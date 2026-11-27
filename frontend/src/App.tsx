@@ -13,6 +13,7 @@ const Compradores = lazy(() => import('./paginas/Compradores'))
 const Gobernanza = lazy(() => import('./paginas/Gobernanza'))
 const Impacto = lazy(() => import('./paginas/Impacto'))
 const Ayuda = lazy(() => import('./paginas/Ayuda'))
+const CvbApp = lazy(() => import('./cvb/CvbApp'))
 
 interface EntradaMenu {
   a: string
@@ -31,6 +32,7 @@ const menu: EntradaMenu[] = [
   { a: '/gobernanza', t: 'Gobernanza', s: 'Consentimiento y acceso', ven: ['laura', 'jurado'] },
   { a: '/impacto', t: 'Impacto', s: 'Hoja de ruta y modelo', ven: ['jurado'] },
   { a: '/ayuda', t: 'Cómo funciona', s: 'Guía de la solución', ven: ['rosa', 'hernan', 'jurado'] },
+  { a: '/cvb', t: 'Módulo comercial', s: 'Dashboard, radar, compradores, admin…', ven: ['rosa', 'hernan', 'laura', 'anke', 'jurado'] },
 ]
 
 const centrado = { display: 'grid', placeItems: 'center', minHeight: '100vh', padding: '24px', textAlign: 'center' } as const
@@ -73,6 +75,7 @@ function Aplicacion({ contexto }: { contexto: ContextoPersona }) {
             <Route path="/gobernanza" element={<Gobernanza />} />
             <Route path="/impacto" element={<Impacto />} />
             <Route path="/ayuda" element={<Ayuda />} />
+            <Route path="/cvb/*" element={<CvbApp />} />
             <Route path="*" element={<NoEncontrado />} />
           </Routes>
         </Suspense>

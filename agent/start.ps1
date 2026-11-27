@@ -2,7 +2,7 @@
 $ErrorActionPreference = "Stop"
 
 $root       = Split-Path -Parent $PSScriptRoot
-$model      = if ($env:CVB_MODEL) { $env:CVB_MODEL } else { "qwen2.5:3b-instruct" }
+$model      = if ($env:CVB_MODEL) { $env:CVB_MODEL } else { "qwen3" }
 $ollamaHost = if ($env:OLLAMA_HOST) { $env:OLLAMA_HOST } else { "http://127.0.0.1:11434" }
 $port       = if ($env:CVB_PORT) { $env:CVB_PORT } else { "8000" }
 
