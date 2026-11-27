@@ -1,0 +1,11 @@
+.git
+**/node_modules
+**/dist
+**/target
+**/__pycache__
+**/*.pyc
+*.exe
+*.msi
+*.zip
+.env
+"coffee-value-bridge - Copy/"

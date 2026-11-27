@@ -23,7 +23,8 @@ from tools import TOOL_SPECS, run_tool
 
 HERE = Path(__file__).resolve().parent
 MODEL = ollama_client.MODEL
-PORT = int(os.environ.get("CVB_PORT", "8000"))
+HOST = os.environ.get("CVB_HOST", "127.0.0.1")
+PORT = int(os.environ.get("CVB_PORT") or os.environ.get("PORT") or "8000")
 MAX_HISTORY = 10
 
 SYSTEM_PROMPT_FILE = HERE / "prompts" / "system.md"
@@ -53,6 +54,30 @@ def _history_messages(history: object) -> list[dict]:
     return messages
 
 
+def offline_answer(message: str, snippets: list[dict]) -> str:
+    """Respuesta determinista cuando no hay Ollama (por ejemplo, en el deploy)."""
+    if not snippets:
+        return (
+            "No hay documentos indexados para responder. "
+            "Inicia Ollama y el agente en local para usar el modelo completo."
+        )
+    lines = [
+        "Modo sin Ollama: respuesta basada en los documentos indexados del repositorio.",
+        "",
+    ]
+    for number, item in enumerate(snippets[:3], 1):
+        text = " ".join(str(item.get("text", "")).split())
+        lines.append(
+            f"{number}. [{item.get('source', '?')} · {item.get('heading', '?')}] "
+            f"{text[:600]}"
+        )
+    lines += [
+        "",
+        "Para cálculos con herramientas y respuestas del modelo, ejecuta Ollama en tu máquina.",
+    ]
+    return "\n".join(lines)
+
+
 def _collect_sources(value: object, found: list[str]) -> None:
     if isinstance(value, dict):
         for key, item in value.items():
@@ -75,7 +100,7 @@ def respond(message: str, history: object) -> dict:
     mode = "direct"
 
     try:
-        first = ollama_client.chat(MODEL, messages, tools=TOOL_SPECS)
+        first = ollama_client.chat(messages, MODEL, tools=TOOL_SPECS)
         calls = first.get("tool_calls") or []
 
         if calls:
@@ -105,7 +130,7 @@ def respond(message: str, history: object) -> dict:
                         "content": json.dumps(result, ensure_ascii=False),
                     }
                 )
-            final = ollama_client.chat(MODEL, messages)
+            final = ollama_client.chat(messages, MODEL)
             answer = str(final.get("content", "")).strip()
         else:
             answer = str(first.get("content", "")).strip()
@@ -116,15 +141,20 @@ def respond(message: str, history: object) -> dict:
         blocks = "\n\n".join(
             f"[{item['source']} · {item['heading']}]\n{item['text']}" for item in snippets
         )
-        messages[0] = {
-            "role": "system",
-            "content": system_prompt()
-            + "\n\nCONTEXTO DE DOCUMENTOS:\n"
-            + (blocks or "No hay documentos indexados."),
-        }
         sources.extend(item["source"] for item in snippets)
-        final = ollama_client.chat(MODEL, messages)
-        answer = str(final.get("content", "")).strip()
+        try:
+            messages[0] = {
+                "role": "system",
+                "content": system_prompt()
+                + "\n\nCONTEXTO DE DOCUMENTOS:\n"
+                + (blocks or "No hay documentos indexados."),
+            }
+            final = ollama_client.chat(messages, MODEL)
+            answer = str(final.get("content", "")).strip()
+        except OllamaError:
+            # En el deploy no hay Ollama: devolvemos el contexto con citas.
+            mode = "offline"
+            answer = offline_answer(message, snippets)
 
     if not sources:
         sources = [item["source"] for item in knowledge.search(message, 3)]
@@ -214,8 +244,8 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def main() -> None:
-    server = ThreadingHTTPServer(("127.0.0.1", PORT), Handler)
-    print(f"Agente Coffee Value Bridge en http://127.0.0.1:{PORT}")
+    server = ThreadingHTTPServer((HOST, PORT), Handler)
+    print(f"Agente Coffee Value Bridge en http://{HOST}:{PORT}")
     print(f"Modelo: {MODEL} | Ollama: {ollama_client.OLLAMA_HOST}")
     print(f"Documentos indexados: {len(knowledge.index())}")
     try:

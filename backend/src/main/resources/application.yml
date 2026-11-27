@@ -12,7 +12,8 @@ spring:
       write-dates-as-timestamps: false
 
 server:
-  port: ${SERVER_PORT:8080}
+  # SERVER_PORT manda en local; PORT lo inyecta Render automáticamente.
+  port: ${SERVER_PORT:${PORT:8080}}
 
 app:
   jwt:

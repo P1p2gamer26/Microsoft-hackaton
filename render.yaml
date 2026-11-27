@@ -1,0 +1,79 @@
+# Coffee Value Bridge — Render Blueprint
+# Dashboard: https://dashboard.render.com/blueprints
+# Crea un Blueprint sobre este repo y selecciona la rama que quieras publicar.
+
+services:
+  # 1) Backend Spring Boot conectado a Render Postgres (con PostGIS)
+  - type: web
+    name: cvb-hackaton-api
+    runtime: docker
+    plan: free
+    region: oregon
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: postgres
+      - key: SPRING_DATASOURCE_URL
+        fromDatabase:
+          name: cvb-hackaton-db
+          property: connectionString
+      - key: SPRING_DATASOURCE_USERNAME
+        fromDatabase:
+          name: cvb-hackaton-db
+          property: user
+      - key: SPRING_DATASOURCE_PASSWORD
+        fromDatabase:
+          name: cvb-hackaton-db
+          property: password
+      - key: SPRING_DATASOURCE_DRIVER_CLASS_NAME
+        value: org.postgresql.Driver
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JAVA_TOOL_OPTIONS
+        value: "-Xmx256m -XX:MaxMetaspaceSize=128m -XX:ActiveProcessorCount=1 -Djava.awt.headless=true"
+
+  # 2) Agente Python: expone /api/chat. Sin Ollama en la nube responde
+  #    con contexto indexado y citas (modo "offline").
+  - type: web
+    name: cvb-hackaton-agente
+    runtime: docker
+    plan: free
+    region: oregon
+    dockerfilePath: ./agent/Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    envVars:
+      - key: CVB_HOST
+        value: 0.0.0.0
+      - key: OLLAMA_HOST
+        value: http://127.0.0.1:11434
+
+  # 3) Frontend React/Vite estático (rutas con hash, assets relativos)
+  - type: web
+    name: cvb-hackaton-web
+    runtime: static
+    rootDir: frontend
+    buildCommand: "npm ci && npm run build"
+    staticPublishPath: ./dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        fromService:
+          name: cvb-hackaton-api
+          type: web
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: VITE_AGENT_URL
+        fromService:
+          name: cvb-hackaton-agente
+          type: web
+          envVarKey: RENDER_EXTERNAL_URL
+
+databases:
+  # Postgres gratis con PostGIS; expira a los 30 días (renovar/upgrade).
+  - name: cvb-hackaton-db
+    plan: free
+    postgresMajorVersion: "16"
+    databaseName: coffee_value_bridge
+    user: cvb_admin
+    ipAllowList: [] # acceso solo desde servicios de Render

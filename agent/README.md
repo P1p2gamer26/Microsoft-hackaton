@@ -41,7 +41,9 @@ Invoke-RestMethod http://127.0.0.1:8000/api/chat -Method Post -ContentType "appl
 |---|---|---|
 | `CVB_MODEL` | `qwen2.5:3b-instruct` | Modelo de Ollama a usar |
 | `OLLAMA_HOST` | `http://127.0.0.1:11434` | Dirección del servicio Ollama |
-| `CVB_PORT` | `8000` | Puerto del agente |
+| `CVB_PORT` | `8000` | Puerto del agente (tiene prioridad sobre `PORT`) |
+| `PORT` | — | Puerto que inyecta Render cuando no hay `CVB_PORT` |
+| `CVB_HOST` | `127.0.0.1` | Interface de escucha; en Render se usa `0.0.0.0` |
 | `CVB_OLLAMA_TIMEOUT` | `180` | Segundos de espera por respuesta |
 | `CVB_ROOT` | raíz del repo | Dónde buscar documentos |
 
@@ -51,6 +53,7 @@ Invoke-RestMethod http://127.0.0.1:8000/api/chat -Method Post -ContentType "appl
 2. El modelo recibe el prompt de `prompts/system.md` y cuatro herramientas: buscar documentos, listar módulos, listar documentos y comparar escenarios verde/tostado.
 3. Si el modelo pide una herramienta, el servidor la ejecuta y le devuelve el resultado para que redacte la respuesta final con citas.
 4. Si el modelo no soporta tool-calling, se inyecta contexto de los documentos directamente (modo `context`).
+5. Si Ollama no está disponible (deploy en Render), responde con fragmentos indexados y citas (modo `offline`).
 
 ## Cambiar de modelo
 
@@ -60,4 +63,4 @@ $env:CVB_MODEL = "llama3.1:8b"
 .\agent\start.ps1
 ```
 
-Nota: el servidor escucha solo en `127.0.0.1`. No exponer a Internet sin autenticación.
+Nota: por defecto escucha solo en `127.0.0.1`. En Render se configura `CVB_HOST=0.0.0.0` y el puerto lo asigna la plataforma. El endpoint público `/api/chat` no requiere autenticación; úsalo solo para demo.

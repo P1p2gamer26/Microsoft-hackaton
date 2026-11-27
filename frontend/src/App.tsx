@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react'
-import { BrowserRouter, Link, NavLink, Route, Routes } from 'react-router-dom'
+import { HashRouter, Link, NavLink, Route, Routes } from 'react-router-dom'
 
 const Mapa3D = lazy(() => import('./paginas/Mapa3D'))
 const Campo = lazy(() => import('./paginas/Campo'))
@@ -38,7 +38,7 @@ const NoEncontrado = () => (
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <HashRouter>
       <div className="app">
         <nav className="lateral" aria-label="Secciones">
           <div className="marca"><span aria-hidden>☕</span><strong>CaféTrace</strong></div>
@@ -65,6 +65,6 @@ export default function App() {
           </Suspense>
         </main>
       </div>
-    </BrowserRouter>
+    </HashRouter>
   )
 }

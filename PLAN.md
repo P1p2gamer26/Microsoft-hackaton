@@ -112,5 +112,21 @@ Criterio de éxito: respuestas en español, basadas en los archivos del repo, co
 - [x] Backend del agente, índice de documentos, herramientas, prompt y script de arranque.
 - [x] Integración del copiloto web con modo IA local / reglas DEMO.
 - [x] Verificación de sintaxis Python y JavaScript; endpoints `/api/health` y `/api/sources` responden.
-- [ ] Instalación de Ollama y descarga del modelo.
+- [x] Instalación de Ollama y descarga de `qwen2.5:3b-instruct` (1.9 GB).
+- [x] Integración del código nuevo de `origin/main` y `origin/julian/frontend-3d`.
+- [x] Cambio de destino de deploy: GitHub Pages descartado (requiere backend) → **Render**.
+- [x] `render.yaml` con frontend estático, backend Spring Boot por Docker, agente Python por Docker y Postgres/PostGIS gratis.
+- [x] `DEPLOY.md` con pasos de configuración y verificación.
 - [ ] Prueba de las 5 preguntas y push/PR a GitHub.
+- [ ] Creación del Blueprint en el Dashboard de Render (requiere login/API key).
+
+## 11. Decisión de deploy (actualizada)
+
+GitHub Pages quedó descartado: el proyecto necesita **Spring Boot + base de datos**, y Pages solo publica archivos estáticos. El destino es **Render**, con este Blueprint:
+
+- `cvb-hackaton-web`: Vite estático (`npm ci && npm run build` → `dist/`).
+- `cvb-hackaton-api`: Docker con `backend/Dockerfile`, perfil `postgres`, Flyway y PostGIS.
+- `cvb-hackaton-agente`: Docker con `agent/Dockerfile`; en la nube usa modo `offline` con citas.
+- `cvb-hackaton-db`: Postgres free 16, privada, con `postgis` y `uuid-ossp`.
+
+Detalles y pasos de configuración en `DEPLOY.md`.
