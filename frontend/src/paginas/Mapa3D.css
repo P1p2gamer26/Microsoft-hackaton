@@ -34,6 +34,8 @@
   scrollbar-width: thin;
 }
 
+.panel-mapa.panel-colapsado { bottom: auto; }
+
 .panel-cabeza {
   display: flex;
   align-items: flex-start;

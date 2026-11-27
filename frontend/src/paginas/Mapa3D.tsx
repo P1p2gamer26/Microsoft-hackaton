@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import maplibregl, {
   type ExpressionSpecification,
   type FilterSpecification,
@@ -45,7 +45,11 @@ const centroFinca = (f: Finca): Coord => {
   ]
 }
 
-const totalKg = lotes.reduce((s, l) => s + l.kg, 0)
+const relleno = () => window.innerWidth >= 760
+  ? { left: 380, top: 0, right: 0, bottom: 0 }
+  : { left: 0, top: 0, right: 0, bottom: 240 }
+
+const totalKg =lotes.reduce((s, l) => s + l.kg, 0)
 const pctCumple = Math.round((fincas.filter(f => f.estado === 'cumple').length / fincas.length) * 100)
 
 const segmentosRuta = rutaHuilaBuenaventura.slice(0, -1).map((a, i) => {
@@ -97,7 +101,7 @@ export default function Mapa3D() {
     cancelarVueloInicial()
     tourActivoRef.current = false
     tourIdRef.current++
-    mapaRef.current?.flyTo({ center, zoom, pitch, bearing: -20, duration, essential: true })
+    mapaRef.current?.flyTo({ center, zoom, pitch, bearing: -20, duration, padding: relleno(), essential: true })
   }, [cancelarVueloInicial])
 
   const seleccionarFinca = useCallback((f: Finca) => {
@@ -112,7 +116,7 @@ export default function Mapa3D() {
     if (mapa.getLayer('fincas-seleccion')) {
       mapa.setFilter('fincas-seleccion', ['==', ['get', 'id'], f.id] as FilterSpecification)
     }
-    mapa.flyTo({ center: centroFinca(f), zoom: 16.5, pitch: 70, bearing: -20, duration: 2800, essential: true })
+    mapa.flyTo({ center: centroFinca(f), zoom: 15.6, pitch: 62, bearing: -20, duration: 2800, padding: relleno(), essential: true })
   }, [cancelarVueloInicial])
 
   useEffect(() => {
@@ -305,8 +309,8 @@ export default function Mapa3D() {
       }
 
       inicioRef.current = window.setTimeout(() => {
-        if (!vivoRef.current) return
-        mapa.flyTo({ center: PITALITO, zoom: 12.6, pitch: 60, bearing: -20, duration: 6000, essential: true })
+        if (!vivoRef.current || seleccionRef.current || tourActivoRef.current) return
+        mapa.flyTo({ center: PITALITO, zoom: 12.6, pitch: 60, bearing: -20, duration: 6000, padding: relleno(), essential: true })
       }, 700)
 
       const puntoSource = mapa.getSource('punto-ruta') as GeoJSONSource | undefined
