@@ -1,0 +1,162 @@
+.gob-pagina {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 32px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.gob-hero {
+  padding: 40px;
+  background: radial-gradient(900px 320px at 92% -15%, rgba(200, 135, 90, 0.22), transparent 70%),
+    linear-gradient(120deg, rgba(28, 22, 18, 0.95), rgba(51, 31, 20, 0.78));
+}
+
+.gob-ojeada {
+  margin: 0 0 10px;
+  color: var(--cafe-claro);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.gob-hero h1 { font-size: clamp(30px, 3.6vw, 48px); line-height: 1.15; }
+.gob-intro { max-width: 800px; margin: 16px 0 0; color: var(--texto-suave); font-size: 15px; line-height: 1.65; }
+.gob-hero-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 22px; }
+.gob-hero-chips .chip:not(.chip-cumple):not(.chip-revision) { background: rgba(255, 255, 255, 0.05); color: var(--texto-suave); }
+
+.gob-bloque { padding: 30px 32px; }
+.gob-cabecera { display: flex; justify-content: space-between; align-items: flex-start; gap: 18px; flex-wrap: wrap; margin-bottom: 24px; }
+.gob-cabecera h2, .gob-cabecera-seccion h2 { font-size: clamp(21px, 2.2vw, 29px); }
+.gob-suave { max-width: 720px; margin: 8px 0 0; color: var(--texto-suave); font-size: 14px; line-height: 1.6; }
+
+.gob-consentimiento { display: grid; grid-template-columns: minmax(300px, 390px) minmax(0, 1fr); gap: 28px; align-items: start; }
+.gob-telefono {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid rgba(232, 180, 138, 0.25);
+  border-radius: 34px;
+  background: linear-gradient(165deg, #241a14, #140f0c 60%);
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.55);
+}
+.gob-telefono-barra {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 14px 14px;
+  color: var(--texto-suave);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.gob-telefono-barra::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 72px;
+  height: 5px;
+  border-radius: 0 0 8px 8px;
+  background: #0a0706;
+}
+.gob-telefono-hora { letter-spacing: 0; }
+.gob-telefono-contenido {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 18px 16px 20px;
+  border: 1px solid var(--borde);
+  border-radius: 26px;
+  background: radial-gradient(320px 120px at 100% 0, rgba(200, 135, 90, 0.14), transparent 70%), #17110e;
+}
+.gob-telefono-contenido h3 { font-size: 20px; }
+.gob-finca { margin: -10px 0 0; color: var(--texto-suave); font-size: 12px; }
+.gob-icono { width: 18px; height: 18px; flex: 0 0 18px; color: var(--cafe-claro); }
+
+.gob-bloque-simple { padding: 14px; border: 1px solid var(--borde); border-radius: 14px; background: rgba(255, 255, 255, 0.025); }
+.gob-bloque-simple h4 { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; font-family: 'Space Grotesk', Inter, sans-serif; font-size: 14px; }
+.gob-bloque-simple p { margin: 0; color: var(--texto-suave); font-size: 12px; line-height: 1.55; }
+.gob-lista-datos, .gob-destinatarios { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.gob-lista-datos li { display: flex; gap: 10px; align-items: flex-start; }
+.gob-lista-datos b, .gob-destinatario-texto b { display: block; font-size: 12px; }
+.gob-lista-datos small, .gob-destinatario-texto small { display: block; margin-top: 2px; color: var(--texto-suave); font-size: 11px; line-height: 1.45; }
+.gob-destinatarios li { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 9px 10px; border-radius: 10px; background: rgba(0, 0, 0, 0.2); }
+.gob-destinatario-texto { min-width: 0; }
+.gob-interruptor {
+  flex: 0 0 42px;
+  width: 42px;
+  height: 24px;
+  padding: 3px;
+  border: 1px solid var(--borde);
+  border-radius: 999px;
+  background: #2a201a;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+.gob-interruptor-punto { display: block; width: 16px; height: 16px; border-radius: 50%; background: var(--texto-suave); transition: transform 0.2s ease, background 0.2s ease; }
+.gob-interruptor-activo { background: rgba(200, 135, 90, 0.3); border-color: rgba(232, 180, 138, 0.55); }
+.gob-interruptor-activo .gob-interruptor-punto { transform: translateX(18px); background: var(--cafe-claro); }
+
+.gob-estado { padding: 12px; border: 1px solid var(--borde); border-radius: 12px; background: rgba(0, 0, 0, 0.24); }
+.gob-estado p { margin: 8px 0 0; color: var(--texto-suave); font-size: 11px; line-height: 1.5; }
+.gob-acciones { display: flex; flex-direction: column; gap: 8px; }
+.gob-acciones button { width: 100%; padding: 11px 14px; font-size: 12px; }
+.gob-boton-retirar:hover { border-color: rgba(248, 113, 113, 0.55); color: var(--rojo); }
+
+.gob-explicacion { display: flex; flex-direction: column; gap: 14px; }
+.gob-nota { display: flex; gap: 14px; padding: 20px; background: rgba(255, 255, 255, 0.02); }
+.gob-nota > .gob-icono { width: 24px; height: 24px; flex-basis: 24px; }
+.gob-nota h3 { font-size: 15px; }
+.gob-nota p { margin: 6px 0 0; color: var(--texto-suave); font-size: 13px; line-height: 1.6; }
+.gob-nota-activa { border-color: rgba(52, 211, 153, 0.35); }
+
+.gob-leyenda { display: flex; gap: 14px; flex-wrap: wrap; color: var(--texto-suave); font-size: 11px; }
+.gob-leyenda b { margin-right: 4px; }
+.gob-nivel-si { color: var(--verde); }
+.gob-nivel-parcial { color: var(--ambar); font-weight: 600; }
+.gob-nivel-no { color: var(--rojo); }
+.gob-tabla-contenedor { overflow-x: auto; border: 1px solid var(--borde); border-radius: 14px; }
+.gob-tabla { width: 100%; min-width: 980px; border-collapse: collapse; font-size: 12px; }
+.gob-tabla th, .gob-tabla td { padding: 12px 14px; border-bottom: 1px solid var(--borde); text-align: left; vertical-align: top; }
+.gob-tabla thead th { background: rgba(200, 135, 90, 0.08); color: var(--cafe-claro); font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+.gob-tabla tbody th { width: 160px; background: rgba(0, 0, 0, 0.16); }
+.gob-tabla tbody th b { display: block; font-family: 'Space Grotesk', Inter, sans-serif; font-size: 13px; }
+.gob-tabla tbody th small { display: block; margin-top: 3px; color: var(--texto-suave); font-size: 10px; }
+.gob-tabla td small { display: block; margin-top: 5px; color: var(--texto-suave); font-size: 11px; line-height: 1.45; }
+.gob-tabla tbody tr:last-child th, .gob-tabla tbody tr:last-child td { border-bottom: 0; }
+.gob-nivel { display: inline-block; min-width: 44px; font-weight: 700; }
+
+.gob-dos-columnas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; align-items: start; }
+.gob-cabecera-seccion { margin-bottom: 20px; }
+.gob-principios { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+.gob-principios li { display: flex; gap: 14px; padding-left: 14px; border-left: 2px solid rgba(200, 135, 90, 0.5); }
+.gob-principio-numero { font-family: 'Space Grotesk', Inter, sans-serif; font-size: 18px; font-weight: 700; color: rgba(232, 180, 138, 0.55); }
+.gob-principios h3 { font-size: 14px; }
+.gob-principios p { margin: 5px 0 0; color: var(--texto-suave); font-size: 12px; line-height: 1.55; }
+.gob-proteccion { display: flex; flex-direction: column; gap: 14px; }
+.gob-proteccion-item { display: flex; gap: 14px; padding: 16px; border: 1px solid var(--borde); border-radius: 12px; background: linear-gradient(150deg, rgba(200, 135, 90, 0.08), rgba(255, 255, 255, 0.02)); }
+.gob-proteccion-icono { flex: 0 0 38px; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 11px; background: rgba(200, 135, 90, 0.14); }
+.gob-proteccion-icono .gob-icono { width: 20px; height: 20px; flex-basis: 20px; }
+.gob-proteccion h3 { font-size: 14px; }
+.gob-proteccion p { margin: 5px 0 0; color: var(--texto-suave); font-size: 12px; line-height: 1.55; }
+
+@media (max-width: 1080px) {
+  .gob-consentimiento, .gob-dos-columnas { grid-template-columns: 1fr; }
+  .gob-telefono { max-width: 420px; }
+}
+
+@media (max-width: 760px) {
+  .gob-pagina { padding: 20px 16px; gap: 16px; }
+  .gob-hero { padding: 26px 20px; }
+  .gob-bloque { padding: 22px 18px; }
+  .gob-tabla { min-width: 900px; }
+  .gob-leyenda { gap: 8px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gob-interruptor, .gob-interruptor-punto { transition: none; }
+}

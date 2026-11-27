@@ -1,11 +1,23 @@
+# Node / Vite
+node_modules/
+dist/
+
+# Java / Maven
+target/
+
 # Python
-.venv/
-venv/
 __pycache__/
 *.py[cod]
+*.pyc
+.venv/
+venv/
 
-# Local / secretos
+# Datos locales y secretos
 .env
+*.db
+*.mv.db
+*.lock.db
+backend/data/
 *.log
 *.tmp
 
@@ -14,6 +26,7 @@ __pycache__/
 *.msi
 *.zip
 
-# Sistemas operativos
+# Herramientas / SO
+.playwright-mcp/
 .DS_Store
 Thumbs.db

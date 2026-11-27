@@ -1,0 +1,176 @@
+.lote-pagina {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 32px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.lote-enlaces { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; color: var(--texto-suave); }
+.lote-volver { text-decoration: none; color: var(--cafe-claro); }
+.lote-volver:hover { text-decoration: underline; }
+
+.lote-vacio { margin: 10vh auto 0; padding: 48px 32px; max-width: 520px; text-align: center; }
+.lote-vacio-icono { font-size: 40px; }
+.lote-vacio h1 { margin: 16px 0 8px; font-size: 28px; }
+.lote-vacio p { color: var(--texto-suave); line-height: 1.6; }
+.lote-vacio .boton { display: inline-block; margin-top: 18px; text-decoration: none; }
+
+.lote-cabecera {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+  gap: 28px;
+  padding: 28px 30px;
+  background: linear-gradient(120deg, rgba(28, 22, 18, 0.94), rgba(64, 39, 24, 0.66));
+}
+.lote-cabecera-principal { display: flex; flex-direction: column; gap: 10px; }
+.lote-ojeada { margin: 0 0 8px; color: var(--cafe-claro); font-size: 12px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }
+.lote-titulo-fila { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.lote-titulo-fila h1 { font-size: clamp(28px, 3.2vw, 42px); }
+.lote-bajada { margin: 10px 0 0; color: var(--texto-suave); line-height: 1.5; }
+
+.lote-sello {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin: 14px 0 0;
+  padding: 7px 11px;
+  border: 1px solid rgba(52, 211, 153, 0.4);
+  border-radius: 10px;
+  color: var(--verde);
+  background: rgba(52, 211, 153, 0.08);
+  font-size: 11px;
+  font-weight: 600;
+}
+.lote-sello span { display: grid; place-items: center; width: 16px; height: 16px; border-radius: 50%; background: var(--verde); color: #06301f; font-size: 11px; }
+.lote-sello-grande { font-size: 12px; }
+.lote-sello-ia {
+  display: inline-flex;
+  align-self: flex-start;
+  padding: 4px 10px;
+  border: 1px solid var(--borde);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--texto-suave);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.lote-banner {
+  padding: 14px 16px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  line-height: 1.5;
+}
+.lote-banner strong { display: block; font-size: clamp(15px, 1.6vw, 19px); line-height: 1.35; }
+.lote-banner p { margin: 8px 0 0; font-size: 13px; }
+.lote-banner-riesgo {
+  padding: 18px 20px;
+  border-color: rgba(248, 113, 113, 0.55);
+  background: rgba(248, 113, 113, 0.14);
+  color: #fecaca;
+}
+.lote-banner-riesgo strong { font-size: clamp(16px, 2vw, 22px); }
+.lote-banner-revision {
+  border-color: rgba(251, 191, 36, 0.5);
+  background: rgba(251, 191, 36, 0.12);
+  color: #fde68a;
+}
+
+.lote-datos { margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-content: start; }
+.lote-datos div { padding: 12px 14px; border: 1px solid var(--borde); border-radius: 12px; background: rgba(0, 0, 0, 0.16); }
+.lote-datos dt { margin-bottom: 4px; color: var(--texto-suave); font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; }
+.lote-datos dd { margin: 0; font-family: 'Space Grotesk', Inter, sans-serif; font-size: 15px; font-weight: 600; }
+
+.lote-columnas { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.65fr); gap: 20px; align-items: start; }
+.lote-lateral { display: flex; flex-direction: column; gap: 20px; }
+.lote-bloque { padding: 24px 26px; }
+.lote-bloque-cabecera { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 22px; }
+.lote-bloque-cabecera h2 { font-size: 20px; }
+.lote-suave { margin: 6px 0 0; color: var(--texto-suave); font-size: 13px; line-height: 1.55; }
+
+.lote-linea { list-style: none; margin: 0; padding: 0 0 0 34px; position: relative; }
+.lote-linea::before {
+  content: '';
+  position: absolute;
+  top: 18px;
+  bottom: 18px;
+  left: 17px;
+  width: 2px;
+  background: linear-gradient(180deg, var(--cafe), rgba(200, 135, 90, 0.18));
+}
+.lote-hito { position: relative; padding: 0 0 26px; animation: lote-aparecer 0.45s ease both; }
+.lote-hito:last-child { padding-bottom: 0; }
+.lote-icono {
+  position: absolute;
+  left: -34px;
+  top: 0;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid rgba(200, 135, 90, 0.45);
+  background: var(--panel-solido);
+  font-size: 17px;
+  box-shadow: 0 0 0 5px var(--fondo);
+}
+.lote-hito-contenido { padding: 14px 16px; border: 1px solid var(--borde); border-radius: 12px; background: rgba(255, 255, 255, 0.025); }
+.lote-hito-titulo { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.lote-hito-titulo h3 { font-size: 16px; }
+.lote-fecha { margin: 7px 0 0; color: var(--cafe-claro); font-size: 12px; font-weight: 600; }
+.lote-lugar { margin: 5px 0 0; font-size: 13px; }
+.lote-detalle { margin: 7px 0 0; color: var(--texto-suave); font-size: 13px; line-height: 1.55; }
+.lote-meta { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 12px; font-size: 11px; color: var(--texto-suave); }
+.lote-meta strong { color: var(--texto); font-weight: 600; }
+.lote-canal { padding: 3px 9px; border-radius: 999px; border: 1px solid var(--borde); color: var(--cafe-claro); background: rgba(200, 135, 90, 0.1); }
+
+.lote-hito-pendiente .lote-icono { border-style: dashed; border-color: rgba(255, 255, 255, 0.18); filter: grayscale(1); opacity: 0.5; }
+.lote-hito-pendiente .lote-hito-contenido { border-style: dashed; background: rgba(255, 255, 255, 0.012); opacity: 0.62; }
+.lote-hito-pendiente .lote-hito-titulo h3, .lote-pendiente { color: var(--texto-suave); }
+.lote-pendiente { padding: 2px 8px; border-radius: 999px; border: 1px solid var(--borde); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; }
+
+.lote-fincas { display: flex; flex-direction: column; gap: 14px; }
+.lote-finca { display: flex; gap: 14px; padding: 14px; border: 1px solid var(--borde); border-radius: 12px; background: rgba(255, 255, 255, 0.025); }
+.lote-poligono { flex: 0 0 84px; width: 84px; height: 84px; }
+.lote-finca-info { min-width: 0; }
+.lote-finca-info h3 { font-size: 15px; }
+.lote-finca-id, .lote-finca-productor { margin: 4px 0 0; font-size: 11px; color: var(--texto-suave); }
+.lote-finca-datos { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 10px 0; }
+.lote-finca-datos div { display: flex; gap: 5px; font-size: 11px; }
+.lote-finca-datos dt { color: var(--texto-suave); }
+.lote-finca-datos dd { margin: 0; font-weight: 600; }
+.lote-finca .lote-sello { margin-top: 10px; font-size: 10px; }
+.lote-alerta { margin: 10px 0 0; padding: 8px 10px; border-radius: 8px; background: rgba(248, 113, 113, 0.1); color: var(--rojo); font-size: 11px; line-height: 1.45; }
+.lote-nota h2 { font-size: 17px; }
+.lote-nota-pendiente { border-color: rgba(251, 191, 36, 0.35); }
+.lote-nota-pendiente h2 { color: var(--ambar); }
+
+@keyframes lote-aparecer {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 1080px) {
+  .lote-columnas { grid-template-columns: 1fr; }
+  .lote-cabecera { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 760px) {
+  .lote-pagina { padding: 20px 16px; gap: 16px; }
+  .lote-cabecera, .lote-bloque { padding: 20px 16px; }
+  .lote-datos { grid-template-columns: 1fr 1fr; }
+  .lote-enlaces span { display: none; }
+}
+
+@media (max-width: 480px) {
+  .lote-datos { grid-template-columns: 1fr; }
+  .lote-finca { flex-direction: column; align-items: center; text-align: center; }
+  .lote-poligono { flex-basis: auto; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lote-hito { animation: none; }
+}

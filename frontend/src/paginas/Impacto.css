@@ -1,0 +1,163 @@
+.imp-pagina {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 32px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.imp-hero {
+  padding: 40px;
+  background: radial-gradient(900px 320px at 90% -15%, rgba(200, 135, 90, 0.22), transparent 70%),
+    radial-gradient(600px 260px at 100% 110%, rgba(52, 211, 153, 0.1), transparent 70%),
+    linear-gradient(120deg, rgba(28, 22, 18, 0.95), rgba(51, 31, 20, 0.78));
+}
+
+.imp-ojeada {
+  margin: 0 0 10px;
+  color: var(--cafe-claro);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.imp-hero h1 { font-size: clamp(30px, 3.6vw, 48px); line-height: 1.15; }
+.imp-intro { max-width: 820px; margin: 16px 0 0; color: var(--texto-suave); font-size: 15px; line-height: 1.65; }
+.imp-hero-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 22px; }
+.imp-hero-chips .chip:not(.chip-cumple):not(.chip-revision) { background: rgba(255, 255, 255, 0.05); color: var(--texto-suave); }
+
+.imp-bloque { padding: 30px 32px; }
+.imp-cabecera { display: flex; justify-content: space-between; align-items: flex-start; gap: 18px; flex-wrap: wrap; margin-bottom: 24px; }
+.imp-cabecera h2, .imp-cabecera-seccion h2 { font-size: clamp(21px, 2.2vw, 29px); }
+.imp-cabecera-seccion { margin-bottom: 20px; }
+.imp-suave { max-width: 740px; margin: 8px 0 0; color: var(--texto-suave); font-size: 14px; line-height: 1.6; }
+.imp-chip-estimado { background: rgba(200, 135, 90, 0.16); color: var(--cafe-claro); }
+.imp-chip-estado { background: rgba(255, 255, 255, 0.05); color: var(--texto-suave); }
+
+.imp-ruta { position: relative; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; list-style: none; margin: 0; padding: 0; }
+.imp-ruta::before {
+  content: '';
+  position: absolute;
+  top: 21px;
+  left: 16.666%;
+  right: 16.666%;
+  height: 2px;
+  background: linear-gradient(90deg, var(--cafe), rgba(232, 180, 138, 0.55), rgba(52, 211, 153, 0.5));
+  z-index: 0;
+}
+.imp-etapa { position: relative; z-index: 1; padding: 22px 18px 18px; border: 1px solid var(--borde); border-radius: 14px; background: rgba(255, 255, 255, 0.025); }
+.imp-etapa-actual { border-color: rgba(200, 135, 90, 0.45); background: linear-gradient(150deg, rgba(200, 135, 90, 0.12), rgba(255, 255, 255, 0.02)); }
+.imp-etapa-numero {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-top: -2px;
+  border: 1px solid rgba(232, 180, 138, 0.4);
+  border-radius: 50%;
+  background: var(--panel-solido);
+  color: var(--cafe-claro);
+  font-family: 'Space Grotesk', Inter, sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+}
+.imp-etapa-actual .imp-etapa-numero { border-color: var(--cafe-claro); background: var(--cafe); color: #1a0f08; }
+.imp-etapa-actual .imp-chip-estado { background: rgba(52, 211, 153, 0.15); color: var(--verde); }
+.imp-etapa .chip { margin-top: 14px; }
+.imp-etapa h3 { margin-top: 12px; font-size: 16px; line-height: 1.35; }
+.imp-etapa p { margin: 8px 0 0; color: var(--texto-suave); font-size: 12px; line-height: 1.6; }
+
+.imp-metricas { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; }
+.imp-metrica { padding: 20px 18px; border: 1px solid var(--borde); border-radius: 14px; background: linear-gradient(155deg, rgba(200, 135, 90, 0.09), rgba(255, 255, 255, 0.02)); }
+.imp-metrica-cabecera { min-height: 24px; }
+.imp-metrica strong {
+  display: block;
+  margin-top: 16px;
+  font-family: 'Space Grotesk', Inter, sans-serif;
+  font-size: clamp(28px, 3vw, 38px);
+  background: var(--acento);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.imp-metrica h3 { margin-top: 8px; font-size: 14px; }
+.imp-metrica p { margin: 6px 0 0; color: var(--texto-suave); font-size: 11px; line-height: 1.5; }
+.imp-aviso {
+  margin: 18px 0 0;
+  padding: 12px 14px;
+  border-left: 2px solid rgba(251, 191, 36, 0.6);
+  border-radius: 8px;
+  background: rgba(251, 191, 36, 0.06);
+  color: var(--texto-suave);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.imp-modelo { display: grid; grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr); gap: 20px; align-items: start; }
+.imp-pagadores { display: flex; flex-direction: column; gap: 12px; }
+.imp-pagador { padding: 16px; border: 1px solid var(--borde); border-radius: 12px; background: rgba(255, 255, 255, 0.025); }
+.imp-pagador-cabecera { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.imp-pagador h3 { font-size: 15px; }
+.imp-pagador p { margin: 8px 0 0; color: var(--texto-suave); font-size: 12px; line-height: 1.6; }
+.imp-nota-modelo { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--borde); }
+.imp-nota-modelo h3 { font-size: 15px; }
+.imp-nota-modelo p { margin: 6px 0 0; color: var(--texto-suave); font-size: 12px; line-height: 1.6; }
+
+.imp-calculadora { background: linear-gradient(155deg, rgba(51, 31, 20, 0.72), rgba(28, 22, 18, 0.72)); }
+.imp-campos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.imp-campo { display: flex; flex-direction: column; gap: 5px; padding: 10px 12px; border: 1px solid var(--borde); border-radius: 10px; background: rgba(0, 0, 0, 0.2); }
+.imp-campo span { font-size: 12px; font-weight: 600; }
+.imp-campo input { width: 100%; padding: 8px 10px; border: 1px solid var(--borde); border-radius: 8px; background: #120d0a; color: var(--texto); font: inherit; font-size: 13px; }
+.imp-campo input:focus-visible { outline: 2px solid var(--cafe-claro); outline-offset: 1px; }
+.imp-campo small { color: var(--texto-suave); font-size: 10px; line-height: 1.4; }
+.imp-resultados { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 18px; }
+.imp-resultado { padding: 16px; border: 1px solid var(--borde); border-radius: 12px; background: rgba(0, 0, 0, 0.24); }
+.imp-resultado span { display: block; color: var(--texto-suave); font-size: 11px; }
+.imp-resultado strong { display: block; margin-top: 6px; font-family: 'Space Grotesk', Inter, sans-serif; font-size: clamp(22px, 2.5vw, 30px); }
+.imp-resultado-destaque { border-color: rgba(200, 135, 90, 0.5); background: linear-gradient(150deg, rgba(200, 135, 90, 0.16), rgba(52, 211, 153, 0.06)); }
+.imp-resultado-destaque strong { background: var(--acento); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.imp-desglose { list-style: none; margin: 16px 0 0; padding: 0; display: flex; flex-direction: column; }
+.imp-desglose li { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--borde); font-size: 12px; }
+.imp-desglose li:last-child { border-bottom: 0; }
+.imp-desglose b { display: block; }
+.imp-desglose small { display: block; margin-top: 2px; color: var(--texto-suave); font-size: 10px; }
+.imp-desglose strong { font-family: 'Space Grotesk', Inter, sans-serif; font-size: 13px; }
+.imp-formula { margin: 14px 0 0; color: var(--texto-suave); font-size: 11px; line-height: 1.6; }
+
+.imp-riesgos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.imp-riesgo { padding: 18px; border: 1px solid var(--borde); border-radius: 12px; background: rgba(255, 255, 255, 0.025); }
+.imp-riesgo-cabecera { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.imp-riesgo h3 { font-size: 15px; }
+.imp-riesgo-texto { margin: 8px 0 0; color: var(--texto-suave); font-size: 12px; line-height: 1.6; }
+.imp-riesgo-mitigacion { margin: 10px 0 0; padding-top: 10px; border-top: 1px solid var(--borde); color: var(--texto-suave); font-size: 12px; line-height: 1.6; }
+.imp-riesgo-mitigacion b { color: var(--verde); }
+
+@media (max-width: 1200px) {
+  .imp-metricas { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .imp-modelo { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 900px) {
+  .imp-ruta { grid-template-columns: 1fr; gap: 14px; }
+  .imp-ruta::before {
+    top: 22px;
+    bottom: 22px;
+    left: 34px;
+    right: auto;
+    width: 2px;
+    height: auto;
+    background: linear-gradient(180deg, var(--cafe), rgba(232, 180, 138, 0.55), rgba(52, 211, 153, 0.5));
+  }
+  .imp-etapa { padding: 16px 16px 16px 68px; }
+  .imp-etapa-numero { position: absolute; left: 0; top: 14px; margin: 0; }
+}
+
+@media (max-width: 760px) {
+  .imp-pagina { padding: 20px 16px; gap: 16px; }
+  .imp-hero { padding: 26px 20px; }
+  .imp-bloque { padding: 22px 18px; }
+  .imp-metricas { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .imp-campos, .imp-resultados, .imp-riesgos { grid-template-columns: 1fr; }
+}

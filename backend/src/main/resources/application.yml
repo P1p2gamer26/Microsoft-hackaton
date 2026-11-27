@@ -1,0 +1,108 @@
+spring:
+  application:
+    name: coffee-value-bridge
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
+  servlet:
+    multipart:
+      max-file-size: 15MB
+      max-request-size: 15MB
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+
+server:
+  port: ${SERVER_PORT:8080}
+
+app:
+  jwt:
+    secret: ${JWT_SECRET}
+    expiration-ms: ${JWT_EXPIRATION_MS:86400000}
+  analytics:
+    url: ${ANALYTICS_SERVICE_URL:http://localhost:8001}
+  integrations:
+    un-comtrade-api-key: ${UN_COMTRADE_API_KEY:}
+    un-comtrade-base-url: ${UN_COMTRADE_BASE_URL:https://comtradeapi.un.org/public/v1}
+    wits-base-url: ${WITS_BASE_URL:https://wits.worldbank.org/API/V1}
+    usitc-api-token: ${USITC_API_TOKEN:}
+    fda-api-key: ${FDA_API_KEY:}
+    fx-api-url: ${FX_API_URL:}
+    osrm-base-url: ${OSRM_BASE_URL:}
+    llm-api-key: ${LLM_API_KEY:}
+
+springdoc:
+  api-docs:
+    path: /api/v1/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+logging:
+  level:
+    com.asoexport.cvb: INFO
+
+---
+spring:
+  config:
+    activate:
+      on-profile: postgres
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:postgres}:${POSTGRES_PORT:5432}/${POSTGRES_DB:coffee_value_bridge}
+    username: ${POSTGRES_USER:cvb_admin}
+    password: ${POSTGRES_PASSWORD:change_me_strong_password}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+---
+spring:
+  config:
+    activate:
+      on-profile: local
+  datasource:
+    url: jdbc:h2:file:./data/coffee_value_bridge;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;AUTO_SERVER=TRUE
+    username: sa
+    password: ""
+    driver-class-name: org.h2.Driver
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: false
+  flyway:
+    enabled: false
+app:
+  jwt:
+    # solo para desarrollo local con H2; en otro perfil JWT_SECRET es obligatorio
+    secret: ${JWT_SECRET:solo-desarrollo-local-cafetrace-no-usar-en-produccion-2026}
+
+---
+spring:
+  config:
+    activate:
+      on-profile: test
+  datasource:
+    url: jdbc:h2:mem:cvb_test;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1
+    username: sa
+    password: ""
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+  flyway:
+    enabled: false
+app:
+  jwt:
+    secret: prueba-unitaria-cafetrace-clave-de-al-menos-32-caracteres
