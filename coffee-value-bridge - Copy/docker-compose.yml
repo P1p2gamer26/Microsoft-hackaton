@@ -1,0 +1,91 @@
+services:
+  postgres:
+    image: postgis/postgis:16-3.4-alpine
+    container_name: cvb-postgis
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-coffee_value_bridge}
+      POSTGRES_USER: ${POSTGRES_USER:-cvb_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me_strong_password}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-cvb_admin} -d ${POSTGRES_DB:-coffee_value_bridge}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  analytics:
+    build:
+      context: ./analytics
+      dockerfile: Dockerfile
+    container_name: cvb-analytics
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: cvb-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      analytics:
+        condition: service_started
+    environment:
+      SPRING_PROFILES_ACTIVE: postgres
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-coffee_value_bridge}
+      POSTGRES_USER: ${POSTGRES_USER:-cvb_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me_strong_password}
+      JWT_SECRET: ${JWT_SECRET:-CoffeeValueBridgeEnterpriseSecretKeyForHS256Min256Bits2026!}
+      ANALYTICS_SERVICE_URL: http://analytics:8001
+      UN_COMTRADE_API_KEY: ${UN_COMTRADE_API_KEY:-}
+      USITC_API_TOKEN: ${USITC_API_TOKEN:-}
+      FDA_API_KEY: ${FDA_API_KEY:-}
+      OSRM_BASE_URL: ${OSRM_BASE_URL:-}
+      FX_API_URL: ${FX_API_URL:-}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+    ports:
+      - "${SERVER_PORT:-8080}:8080"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: /api/v1
+    container_name: cvb-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "3000:80"
+
+  # Servicio GIS empresarial opcional: docker compose --profile geoserver up -d
+  geoserver:
+    image: docker.osgeo.org/geoserver:2.26.2
+    container_name: cvb-geoserver
+    profiles: ["geoserver"]
+    environment:
+      GEOSERVER_ADMIN_USER: ${GEOSERVER_ADMIN_USER:-admin}
+      GEOSERVER_ADMIN_PASSWORD: ${GEOSERVER_ADMIN_PASSWORD:-geoserver_change_me}
+    ports:
+      - "8090:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pgdata:
