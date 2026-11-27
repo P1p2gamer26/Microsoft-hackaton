@@ -193,7 +193,7 @@ function escribirCola(registros: RegistroOffline[]): boolean {
   }
 }
 
-export function encolar<T = { ok: boolean; cola: RegistroOffline[] }>(nuevo: NuevoRegistro): T {
+export function encolar(nuevo: NuevoRegistro): { ok: boolean; cola: RegistroOffline[] } {
   const registro: RegistroOffline = {
     id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
     tipo: nuevo.tipo,
@@ -203,28 +203,33 @@ export function encolar<T = { ok: boolean; cola: RegistroOffline[] }>(nuevo: Nue
     sincronizado: false,
   }
   const cola = [...leerCola(), registro]
-  return { ok: escribirCola(cola), cola } as unknown as T
+  return { ok: escribirCola(cola), cola }
 }
 
 export function haySenal(): boolean {
   return typeof navigator === 'undefined' ? true : navigator.onLine
 }
 
-export function sincronizar(enLinea: boolean = haySenal()): Promise<RegistroOffline[]> {
+export async function sincronizar(enLinea: boolean = haySenal()): Promise<RegistroOffline[]> {
   const cola = leerCola()
-  const idsPendientes = new Set(cola.filter(registro => !registro.sincronizado).map(registro => registro.id))
-  if (!enLinea || idsPendientes.size === 0) {
-    return Promise.resolve(cola)
+  const pendientes = cola.filter(registro => !registro.sincronizado)
+  if (!enLinea || pendientes.length === 0) return cola
+
+  let aceptados = new Set(pendientes.map(registro => registro.id))
+  try {
+    // import dinámico: la autoprueba de este archivo corre en Node sin el cliente de API
+    const { enviarRegistros } = await import('./api')
+    aceptados = new Set(await enviarRegistros(pendientes))
+  } catch {
+    // ponytail: sin backend (o sin sesión) se simula el envío para la demo; el chip de origen muestra DEMO
+    await new Promise(resolve => setTimeout(resolve, 1200))
   }
-  return new Promise(resolve => {
-    setTimeout(() => {
-      const sincronizada = leerCola().map(registro =>
-        idsPendientes.has(registro.id) ? { ...registro, sincronizado: true } : registro,
-      )
-      escribirCola(sincronizada)
-      resolve(sincronizada)
-    }, 1200)
-  })
+
+  const sincronizada = leerCola().map(registro =>
+    aceptados.has(registro.id) ? { ...registro, sincronizado: true } : registro,
+  )
+  escribirCola(sincronizada)
+  return sincronizada
 }
 
 const casosAutoprueba: Array<{ nombre: string; texto: string; comprobar: (e: EntregaExtraida) => boolean }> = [

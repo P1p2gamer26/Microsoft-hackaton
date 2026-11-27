@@ -26,11 +26,6 @@ export interface ResumenEudr {
   kgListos: number
 }
 
-export interface ResultadoSincronizacion {
-  ok: boolean
-  sincronizados: number
-}
-
 const CLAVE_TOKEN = 'cafetrace-token'
 const CLAVE_PERSONA = 'cafetrace-persona'
 const TIEMPO_ESPERA = 2500
@@ -100,10 +95,21 @@ export function notificarPersona(id: PersonaId): void {
   for (const listener of suscriptoresPersona) listener()
 }
 
+// Cambia cada vez que cambia el token: las pantallas vuelven a pedir datos al terminar el login.
+let versionSesion = 0
+const suscriptoresSesion = new Set<() => void>()
+const suscribirseSesion = (listener: () => void) => {
+  suscriptoresSesion.add(listener)
+  return () => { suscriptoresSesion.delete(listener) }
+}
+const obtenerVersionSesion = () => versionSesion
+
 export function guardarToken(nuevoToken: string | null): void {
   token = nuevoToken
   if (nuevoToken) escribirSesion(CLAVE_TOKEN, nuevoToken)
   else borrarSesion(CLAVE_TOKEN)
+  versionSesion++
+  for (const listener of suscriptoresSesion) listener()
 }
 
 export function configurarCredenciales(nuevas: { email: string; password: string } | null): void {
@@ -175,7 +181,9 @@ export async function cargar<T>(ruta: string, respaldo: () => T): Promise<Result
         return demo()
       }
     }
-    if (es4xx(error) && estadoDe(error) !== 401) throw error
+    // sin sesión el backend responde 401 o 403: se muestra la demo hasta que llegue el token
+    const estado = estadoDe(error)
+    if (es4xx(error) && estado !== 401 && estado !== 403) throw error
     return demo()
   }
 }
@@ -219,14 +227,14 @@ export function crearLote(lote: Lote): Promise<Lote> {
   return peticion<Lote>(`${TRAZABILIDAD}/lotes`, { method: 'POST', body: JSON.stringify(lote) })
 }
 
-export function sincronizar(registros: RegistroOffline[]): Promise<ResultadoSincronizacion> {
-  return peticion<Partial<ResultadoSincronizacion>>(`${TRAZABILIDAD}/sync`, {
+// Devuelve los ids que el backend dio por guardados (CREADO o DUPLICADO); los RECHAZADO siguen pendientes.
+export async function enviarRegistros(registros: RegistroOffline[]): Promise<string[]> {
+  const respuesta = await peticion<{ id: string; estado: string }[]>(`${TRAZABILIDAD}/sync`, {
     method: 'POST',
     body: JSON.stringify(registros),
-  }).then(respuesta => ({
-    ok: respuesta.ok ?? true,
-    sincronizados: respuesta.sincronizados ?? registros.length,
-  }))
+  })
+  publicarOrigen('api')
+  return respuesta.filter(r => r.estado === 'CREADO' || r.estado === 'DUPLICADO').map(r => r.id)
 }
 
 export function resumenEudr(): Promise<Resultado<ResumenEudr>> {
@@ -242,6 +250,7 @@ interface EstadoDatos<T> {
 
 export function useDatos<T>(cargador: () => Promise<Resultado<T>>, deps: unknown[] = []): EstadoDatos<T> {
   const persona = useSyncExternalStore(suscribirsePersona, obtenerPersonaActiva, obtenerPersonaActiva)
+  const sesion = useSyncExternalStore(suscribirseSesion, obtenerVersionSesion, obtenerVersionSesion)
   const cargadorRef = useRef(cargador)
   cargadorRef.current = cargador
   const claveDeps = deps.map(dep => (typeof dep === 'object' && dep !== null ? JSON.stringify(dep) : String(dep))).join('|')
@@ -271,7 +280,7 @@ export function useDatos<T>(cargador: () => Promise<Resultado<T>>, deps: unknown
     return () => {
       activo = false
     }
-  }, [persona, claveDeps])
+  }, [persona, sesion, claveDeps])
 
   return estado
 }

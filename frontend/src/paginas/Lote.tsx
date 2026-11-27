@@ -1,6 +1,6 @@
 ﻿import { Link, useParams } from 'react-router-dom'
 import { colorEstado, etiquetaEstado, fincas, type Coord, type Etapa, type EventoLote } from '../datos'
-import { todosLosLotes } from '../registro'
+import { useLotes } from '../registro'
 import './Lote.css'
 
 const recorrido: { etapa: Etapa; icono: string; titulo: string }[] = [
@@ -42,7 +42,7 @@ function puntosPoligono(poligono: Coord[]) {
 
 export default function Lote() {
   const { id } = useParams<{ id: string }>()
-  const lote = todosLosLotes().find(item => item.id === id)
+  const lote = useLotes().find(item => item.id === id)
 
   if (!lote) {
     return (

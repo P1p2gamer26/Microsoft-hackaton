@@ -1,3 +1,4 @@
+import { useDatos, obtenerLotes } from './api'
 import { lotes as lotesDemo, type Coord, type EstadoEudr, type Etapa, type EventoLote, type Lote } from './datos'
 
 const CLAVE_LOTES = 'cafetrace-lotes'
@@ -63,6 +64,8 @@ export function guardarLote(lote: Lote): boolean {
   try {
     const existentes = lotesCreados().filter(guardado => guardado.id !== lote.id)
     localStorage.setItem(CLAVE_LOTES, JSON.stringify([lote, ...existentes]))
+    // se guarda local primero (sin señal) y se intenta subir al backend; si no responde, queda solo local
+    void import('./api').then(({ crearLote }) => crearLote(lote)).catch(() => undefined)
     return true
   } catch {
     return false
@@ -73,4 +76,12 @@ export function todosLosLotes(): Lote[] {
   const creados = lotesCreados()
   const ids = new Set(creados.map(lote => lote.id))
   return [...creados, ...lotesDemo.filter(lote => !ids.has(lote.id))]
+}
+
+// Lotes del backend (o de la demo si no responde) más los creados en este equipo.
+export function useLotes(): Lote[] {
+  const { datos } = useDatos(obtenerLotes)
+  const creados = lotesCreados()
+  const ids = new Set(creados.map(lote => lote.id))
+  return [...creados, ...(datos ?? lotesDemo).filter(lote => !ids.has(lote.id))]
 }
