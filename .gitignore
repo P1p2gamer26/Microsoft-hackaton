@@ -11,3 +11,4 @@ backend/data/
 .env
 .playwright-mcp/
 *.log
+*.local
