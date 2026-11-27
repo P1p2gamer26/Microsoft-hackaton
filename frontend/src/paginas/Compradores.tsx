@@ -217,7 +217,7 @@ export default function Compradores() {
     setErrorSimulacion(null)
     try {
       const respuesta = await enviarJson<ResultadoComparadorBackend>('/comparator/simulate', {
-        scenarioName: `CaféTrace · ${lote.id}`,
+        scenarioName: `CoffeBite · ${lote.id}`,
         greenCoffeeKg: lote.kg,
         greenPurchasePriceUsdKg: supuestos.costoMateriaPrimaUsdKg,
         processingSelectionCostUsd: 0,

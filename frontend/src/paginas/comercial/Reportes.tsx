@@ -144,7 +144,7 @@ export default function Reportes() {
         ? { titulo: vista.titulo, filas: vista.filas }
         : await cargarReporte(codigo)
       const fecha = new Date().toISOString().slice(0, 10)
-      descargarCsv(`CafeTrace_${codigo}_${fecha}.csv`, generarCsv(respuesta.filas))
+      descargarCsv(`CoffeBite_${codigo}_${fecha}.csv`, generarCsv(respuesta.filas))
     } catch (errorCargado) {
       setError(comoError(errorCargado))
     } finally {
@@ -159,7 +159,7 @@ export default function Reportes() {
     <section className="com-pagina reportes-pagina">
       <header className="vidrio com-cabecera">
         <div>
-          <p className="com-ojeada">Coffee Value Bridge · indicadores empresariales</p>
+          <p className="com-ojeada">CoffeBite · indicadores empresariales</p>
           <h1>Centro de reportes</h1>
           <p>
             Consulta los indicadores en pantalla y descarga los datos como CSV desde el navegador.

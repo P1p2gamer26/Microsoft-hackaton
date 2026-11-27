@@ -27,7 +27,7 @@ public class AuthAndAdminController {
 
     @GetMapping("/health")
     public Map<String, Object> health() {
-        return Map.of("status", "UP", "service", "COFFEE VALUE BRIDGE API", "timestamp", Instant.now().toString());
+        return Map.of("status", "UP", "service", "CoffeBite API", "timestamp", Instant.now().toString());
     }
 
     @PostMapping("/auth/login")

@@ -281,7 +281,7 @@ export default function Copiloto() {
     <section className="com-pagina copiloto-pagina">
       <header className="vidrio com-cabecera">
         <div>
-          <p className="com-ojeada">Coffee Value Bridge · cumplimiento comercial</p>
+          <p className="com-ojeada">CoffeBite · cumplimiento comercial</p>
           <h1>Copiloto de exportación</h1>
           <p>
             Consulta los requisitos sanitarios, aduaneros y de etiquetado según destino y producto.

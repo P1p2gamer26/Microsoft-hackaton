@@ -446,7 +446,7 @@ export default function Mapa3D() {
           aria-controls="contenido-panel-mapa"
         >
           <span>
-            <small>CaféTrace · EUDR</small>
+            <small>CoffeBite · EUDR</small>
             <h1>Trazabilidad finca → puerto</h1>
           </span>
           <span className="panel-alternar" aria-hidden>{panelAbierto ? '−' : '+'}</span>

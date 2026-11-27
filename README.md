@@ -1,10 +1,10 @@
-# CaféTrace · Trazabilidad finca → puerto
+# CoffeBite · Trazabilidad finca → puerto
 
 Hackathon Microsoft · LEAD Aspire Colombia 2026 · caso Asoexport.
 
 **Pregunta del caso:** ¿cómo puede la IA ayudar a construir trazabilidad desde fincas pequeñas, con poca señal y baja adopción digital?
 
-CaféTrace sigue el café desde el polígono de la finca hasta el puerto, para cumplir el reglamento europeo de deforestación (EUDR), y convierte ese lote trazado en una venta.
+CoffeBite sigue el café desde el polígono de la finca hasta el puerto, para cumplir el reglamento europeo de deforestación (EUDR), y convierte ese lote trazado en una venta.
 
 | Persona | Pantalla | Qué hace |
 |---|---|---|
@@ -16,7 +16,7 @@ CaféTrace sigue el café desde el polígono de la finca hasta el puerto, para c
 
 ## Estructura
 ```
-frontend/    React + Vite (CaféTrace): la app
+frontend/    React + Vite (CoffeBite): la app
 backend/     Spring Boot 3.4 / Java 21 (motor de Coffee Value Bridge + trazabilidad)
 analytics/   Python (GIS y Time to Market), opcional
 docs/        caso oficial, planes y documentación de Coffee Value Bridge (docs/cvb)

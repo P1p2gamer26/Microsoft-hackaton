@@ -253,7 +253,7 @@ export default function Mercados() {
     <section className="com-pagina">
       <header className="vidrio com-cabecera">
         <div>
-          <p className="com-ojeada">Coffee Value Bridge · Inteligencia de mercados</p>
+          <p className="com-ojeada">CoffeBite · Inteligencia de mercados</p>
           <h1>Radar de mercados internacionales</h1>
           <p>
             Clasificación arancelaria HS 090121 (tostado sin descafeinar) y HS 090122 (tostado descafeinado)

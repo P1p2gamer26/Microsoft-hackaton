@@ -97,10 +97,10 @@ export default function Ayuda() {
   return (
     <section className="ayuda-pagina">
       <header className="vidrio ayuda-hero">
-        <p className="ayuda-ojeada">Hackathon Microsoft · Asoexport · CaféTrace</p>
+        <p className="ayuda-ojeada">Hackathon Microsoft · Asoexport · CoffeBite</p>
         <h1>¿Cómo puede la IA ayudar a construir trazabilidad desde fincas pequeñas, con poca señal y baja adopción digital?</h1>
         <p className="ayuda-intro">
-          CaféTrace convierte cada entrega, pesaje y embarque en evidencia verificable, sin pedirle
+          CoffeBite convierte cada entrega, pesaje y embarque en evidencia verificable, sin pedirle
           al caficultor que cambie su forma de trabajar.
         </p>
         <div className="ayuda-cifras">

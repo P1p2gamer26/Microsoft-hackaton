@@ -351,7 +351,7 @@ export default function Logistica() {
     <section className="com-pagina">
       <header className="vidrio com-cabecera">
         <div>
-          <p className="com-ojeada">Coffee Value Bridge · Logística</p>
+          <p className="com-ojeada">CoffeBite · Logística</p>
           <h1>Simulador logístico y optimizador GIS</h1>
           <p>
             Doce capas espaciales de la cadena exportadora, análisis de proximidad y comparación de rutas

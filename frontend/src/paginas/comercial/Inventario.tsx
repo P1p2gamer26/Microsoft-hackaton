@@ -356,7 +356,7 @@ export default function Inventario() {
     <section className="com-pagina">
       <header className="com-cabecera vidrio">
         <div>
-          <p className="com-ojeada">CaféTrace · Comercial</p>
+          <p className="com-ojeada">CoffeBite · Comercial</p>
           <h1>Productos e inventario de café tostado</h1>
           <p>La vida útil y la fecha límite comercial se basan en la validación del fabricante, no en la fecha de tostión.</p>
         </div>

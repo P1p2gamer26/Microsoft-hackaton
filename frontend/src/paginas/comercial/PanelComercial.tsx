@@ -138,7 +138,7 @@ export default function PanelComercial() {
     <section className="com-pagina">
       <header className="vidrio com-cabecera">
         <div>
-          <p className="com-ojeada">Coffee Value Bridge · Inteligencia comercial</p>
+          <p className="com-ojeada">CoffeBite · Inteligencia comercial</p>
           <h1>Panel comercial internacional</h1>
           <p>
             {datos?.dataNotice ?? 'Indicadores consolidados de ventas, logística, inventario y tiempos de comercialización.'}

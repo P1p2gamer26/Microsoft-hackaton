@@ -215,7 +215,7 @@ export default function Finanzas() {
     <section className="com-pagina finanzas-pagina">
       <header className="vidrio com-cabecera">
         <div>
-          <p className="com-ojeada">Coffee Value Bridge · inteligencia financiera</p>
+          <p className="com-ojeada">CoffeBite · inteligencia financiera</p>
           <h1>Finanzas y rentabilidad</h1>
           <p>
             Ingresos, costos y márgenes por operación, comprador, mercado y producto.

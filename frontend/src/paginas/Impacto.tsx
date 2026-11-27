@@ -178,7 +178,7 @@ export default function Impacto() {
   return (
     <section className="imp-pagina">
       <header className="vidrio imp-hero">
-        <p className="imp-ojeada">Hackathon Microsoft · Asoexport · CaféTrace</p>
+        <p className="imp-ojeada">Hackathon Microsoft · Asoexport · CoffeBite</p>
         <h1>Impacto, hoja de ruta y modelo</h1>
         <p className="imp-intro">
           Un piloto de 1.000 fincas en Huila para ordenar el dato primero, verificarlo después y

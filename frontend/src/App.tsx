@@ -77,7 +77,7 @@ function Aplicacion({ contexto }: { contexto: ContextoPersona }) {
   return (
     <div className="app">
       <nav className="lateral" aria-label="Secciones">
-        <div className="marca"><span aria-hidden>☕</span><strong>CaféTrace</strong></div>
+        <div className="marca"><span aria-hidden>☕</span><strong>CoffeBite</strong></div>
         <SelectorPersona {...contexto} />
         <OrigenDatos />
         {menu.filter(entrada => entrada.ven.includes(persona)).map(entrada => (

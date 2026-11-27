@@ -1,5 +1,5 @@
 """
-COFFEE VALUE BRIDGE - Python Data Intelligence & GIS Microservice (Flask + Pandas + Scikit-learn + GeoPandas)
+CoffeBite - Python Data Intelligence & GIS Microservice (Flask + Pandas + Scikit-learn + GeoPandas)
 """
 from flask import Flask, jsonify, request
 from app.ttm_model import analyze_ttm_events
@@ -10,7 +10,7 @@ app = Flask(__name__)
 
 @app.get("/health")
 def health():
-    return jsonify({"status": "UP", "service": "COFFEE VALUE BRIDGE Python Analytics & GIS"})
+    return jsonify({"status": "UP", "service": "CoffeBite Python Analytics & GIS"})
 
 
 @app.post("/predict-ttm")

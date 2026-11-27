@@ -15,10 +15,10 @@ public class OpenApiConfig {
     public OpenAPI coffeeValueBridgeOpenAPI() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("COFFEE VALUE BRIDGE API")
+                        .title("CoffeBite API")
                         .version("1.0.0")
-                        .description("API REST empresarial de inteligencia comercial, geoespacial y logística para acelerar la comercialización internacional del café tostado colombiano (ASOEXPORT).")
-                        .contact(new Contact().name("ASOEXPORT - Coffee Value Bridge")))
+                        .description("API REST empresarial de trazabilidad EUDR e inteligencia comercial, geoespacial y logística para acelerar la comercialización internacional del café colombiano (ASOEXPORT).")
+                        .contact(new Contact().name("ASOEXPORT - CoffeBite")))
                 .addSecurityItem(new SecurityRequirement().addList("bearerAuth"))
                 .components(new Components().addSecuritySchemes("bearerAuth",
                         new SecurityScheme()

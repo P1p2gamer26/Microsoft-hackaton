@@ -16,7 +16,7 @@ public record EpcisDocumentDto(
 
     public static EpcisDocumentDto de(List<ObjectEventDto> eventos) {
         return new EpcisDocumentDto(
-                List.of(CONTEXT_URL, Map.of("cafe", "https://cafetrace.example/epcis/")),
+                List.of(CONTEXT_URL, Map.of("cafe", "https://coffebite.example/epcis/")),
                 "EPCISDocument",
                 "2.0",
                 java.time.Instant.now().toString(),

@@ -171,7 +171,7 @@ export default function Administracion() {
     <section className="com-pagina">
       <header className="vidrio com-cabecera">
         <div>
-          <p className="com-ojeada">Coffee Value Bridge · Gobernanza</p>
+          <p className="com-ojeada">CoffeBite · Gobernanza</p>
           <h1>Administración, seguridad RBAC e integraciones</h1>
           <p>
             Control de acceso por roles, aislamiento multiempresa, conectores externos y bitácora de auditoría.

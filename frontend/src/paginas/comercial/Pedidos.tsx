@@ -263,7 +263,7 @@ export default function Pedidos() {
     <section className="com-pagina">
       <header className="com-cabecera vidrio">
         <div>
-          <p className="com-ojeada">CaféTrace · Comercial</p>
+          <p className="com-ojeada">CoffeBite · Comercial</p>
           <h1>Gestión de pedidos y operaciones</h1>
           <p>Conecta la venta con la reserva de inventario, los despachos y las desviaciones entre fechas estimadas y reales.</p>
         </div>

@@ -230,7 +230,7 @@ export default function Gobernanza() {
   return (
     <section className="gob-pagina">
       <header className="vidrio gob-hero">
-        <p className="gob-ojeada">Hackathon Microsoft · Asoexport · CaféTrace</p>
+        <p className="gob-ojeada">Hackathon Microsoft · Asoexport · CoffeBite</p>
         <h1>Gobernanza del dato</h1>
         <p className="gob-intro">
           La trazabilidad solo funciona si la finca confía. Rosa Elvira Cuéllar entiende qué se guarda,
@@ -259,7 +259,7 @@ export default function Gobernanza() {
         <div className="gob-consentimiento">
           <div className="gob-telefono">
             <div className="gob-telefono-barra">
-              <span>CaféTrace</span>
+              <span>CoffeBite</span>
               <span className="gob-telefono-hora">9:41</span>
             </div>
             <div className="gob-telefono-contenido">

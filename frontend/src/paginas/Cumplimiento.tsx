@@ -42,7 +42,7 @@ function construirEpcis(lotes: Lote[]) {
   return {
     '@context': [
       'https://ref.gs1.org/standards/epcis/2.0/epcis-context.jsonld',
-      { cafe: 'https://cafetrace.example/epcis/' },
+      { cafe: 'https://coffebite.example/epcis/' },
     ],
     type: 'EPCISDocument',
     schemaVersion: '2.0',
@@ -155,7 +155,7 @@ export default function Cumplimiento() {
     const url = URL.createObjectURL(blob)
     const enlace = document.createElement('a')
     enlace.href = url
-    enlace.download = 'cafetrace-epcis-2.0.json'
+    enlace.download = 'coffebite-epcis-2.0.json'
     document.body.appendChild(enlace)
     enlace.click()
     enlace.remove()

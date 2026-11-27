@@ -314,7 +314,7 @@ export default function Crm() {
     <section className="com-pagina">
       <header className="com-cabecera vidrio">
         <div>
-          <p className="com-ojeada">CaféTrace · Comercial</p>
+          <p className="com-ojeada">CoffeBite · Comercial</p>
           <h1>CRM comercial internacional</h1>
           <p>Pipeline exportador de doce etapas, registros automáticos de tiempo a mercado y alertas de inactividad.</p>
         </div>

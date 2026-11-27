@@ -1,4 +1,4 @@
-﻿# Levanta CaféTrace: backend Spring Boot (8080), frontend (5173) y, si se pide, analytics Python (8001).
+﻿# Levanta CoffeBite: backend Spring Boot (8080), frontend (5173) y, si se pide, analytics Python (8001).
 # Uso:  .\iniciar-demo.ps1            (backend + frontend)
 #       .\iniciar-demo.ps1 -ConAnalytics
 #       .\iniciar-demo.ps1 -SoloFrontend   (modo demo con datos locales, sin Java)

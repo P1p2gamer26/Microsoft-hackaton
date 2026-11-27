@@ -138,7 +138,7 @@ export default function TiempoMercado() {
     <section className="com-pagina">
       <header className="vidrio com-cabecera">
         <div>
-          <p className="com-ojeada">Coffee Value Bridge · Inteligencia comercial</p>
+          <p className="com-ojeada">CoffeBite · Inteligencia comercial</p>
           <h1>Time to Market Intelligence</h1>
           <p>
             Tiempo total desde que el café tostado está disponible hasta la entrega internacional. Calculado a partir de{' '}
