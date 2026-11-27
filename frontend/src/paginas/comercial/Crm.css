@@ -1,0 +1,252 @@
+.crm-filtro {
+  min-width: 200px;
+}
+
+.crm-umbral {
+  min-width: 130px;
+}
+
+.crm-umbral input {
+  width: 80px;
+}
+
+.crm-alertas {
+  border-left: 3px solid var(--ambar);
+}
+
+.crm-alertas-lista {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 8px;
+}
+
+.crm-alerta {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  text-align: left;
+  border: 1px solid var(--borde);
+  border-radius: 10px;
+  background: rgba(251, 191, 36, 0.05);
+  color: var(--texto);
+  padding: 8px 10px;
+  font-size: 13px;
+}
+
+.crm-alerta:hover {
+  background: rgba(251, 191, 36, 0.12);
+}
+
+.crm-tablero {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 4px 2px 12px;
+  scroll-snap-type: x proximity;
+}
+
+.crm-columna {
+  flex: 0 0 286px;
+  scroll-snap-align: start;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 180px;
+}
+
+.crm-columna-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border-bottom: 1px solid var(--borde);
+  padding-bottom: 10px;
+}
+
+.crm-columna-cabecera h2 {
+  font-size: 13px;
+  color: var(--cafe-claro);
+}
+
+.crm-conteo {
+  border-radius: 999px;
+  background: rgba(200, 135, 90, 0.18);
+  color: var(--texto);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 9px;
+}
+
+.crm-vacio {
+  text-align: center;
+  padding: 14px 0;
+}
+
+.crm-tarjeta {
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.18);
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.crm-tarjeta-alerta {
+  border-color: rgba(251, 191, 36, 0.55);
+  background: rgba(251, 191, 36, 0.05);
+}
+
+.crm-tarjeta-titulo {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.crm-tarjeta-titulo button {
+  border: 0;
+  background: none;
+  padding: 0;
+  text-align: left;
+  color: var(--texto);
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 1.3;
+}
+
+.crm-tarjeta-titulo button:hover {
+  color: var(--cafe-claro);
+}
+
+.crm-tarjeta-comprador,
+.crm-tarjeta-datos,
+.crm-tarjeta-pie {
+  margin: 0;
+  font-size: 12px;
+}
+
+.crm-tarjeta-datos,
+.crm-tarjeta-pie {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.crm-tarjeta-datos strong {
+  color: var(--verde);
+}
+
+.crm-tarjeta-pie {
+  color: var(--texto-suave);
+}
+
+.crm-probabilidad {
+  gap: 2px;
+}
+
+.crm-probabilidad .com-barra {
+  grid-template-columns: 1fr 60px 38px;
+  gap: 6px;
+  font-size: 11px;
+}
+
+.crm-probabilidad .com-barra > span:first-child {
+  color: var(--texto-suave);
+}
+
+.crm-mover {
+  font-size: 11px;
+}
+
+.crm-mover select {
+  min-height: 36px;
+  padding: 6px 8px;
+  font-size: 11px;
+}
+
+.crm-perdida {
+  border-top: 1px solid var(--borde);
+  padding-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.crm-perdida .boton,
+.crm-perdida .boton-fantasma {
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+.crm-fila-alerta td {
+  background: rgba(251, 191, 36, 0.06);
+}
+
+.crm-celda-secundaria {
+  margin-top: 4px;
+}
+
+.crm-campo-ancho {
+  grid-column: 1 / -1;
+}
+
+.crm-lista-actividades {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.crm-lista-actividades li {
+  border: 1px solid var(--borde);
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: rgba(0, 0, 0, 0.16);
+}
+
+.crm-actividad-cabecera {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.crm-detalle-cabecera {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.crm-detalle .com-rejilla {
+  gap: 14px 24px;
+  font-size: 13px;
+}
+
+.crm-detalle p {
+  margin: 2px 0;
+}
+
+.crm-modal {
+  border-left: 3px solid var(--cafe);
+}
+
+@media (max-width: 760px) {
+  .crm-columna {
+    flex-basis: 250px;
+  }
+
+  .crm-tablero {
+    margin-inline: -4px;
+  }
+
+  .crm-detalle .com-rejilla {
+    grid-template-columns: 1fr;
+  }
+}
