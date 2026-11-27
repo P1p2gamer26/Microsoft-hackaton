@@ -1,6 +1,7 @@
 ﻿import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { colorEstado, etiquetaEstado, fincas, lotes, type EstadoEudr, type Etapa, type Lote } from '../datos'
+import { colorEstado, etiquetaEstado, fincas, type EstadoEudr, type Etapa, type Lote } from '../datos'
+import { todosLosLotes } from '../registro'
 import './Cumplimiento.css'
 
 const estados: EstadoEudr[] = ['cumple', 'revision', 'riesgo']
@@ -37,7 +38,7 @@ function motivoRetencion(lote: Lote): string {
   return motivos.length ? motivos.join('; ') : `clasificación ${etiquetaEstado[lote.estado]} pendiente de verificación`
 }
 
-function construirEpcis() {
+function construirEpcis(lotes: Lote[]) {
   return {
     '@context': [
       'https://ref.gs1.org/standards/epcis/2.0/epcis-context.jsonld',
@@ -70,7 +71,7 @@ function construirEpcis() {
   }
 }
 
-function construirDeclaracion(conPoligono: number, alertas: number) {
+function construirDeclaracion(lotes: Lote[], conPoligono: number, alertas: number) {
   const origen = fincas.map(f => `${f.nombre} (${f.id}, ${f.municipio})`)
   const incluidos = lotes.filter(lote => lote.estado === 'cumple')
   const retenidos = lotes.filter(lote => lote.estado !== 'cumple')
@@ -107,19 +108,39 @@ function construirDeclaracion(conPoligono: number, alertas: number) {
 export default function Cumplimiento() {
   const navigate = useNavigate()
   const [modalAbierto, setModalAbierto] = useState(false)
+  const [redactando, setRedactando] = useState(false)
   const dialogRef = useRef<HTMLDialogElement>(null)
   const botonDeclaracionRef = useRef<HTMLButtonElement>(null)
+  const temporizadorRef = useRef<number | null>(null)
 
+  const lotes = todosLosLotes()
   const conPoligono = fincas.filter(f => f.poligono.length >= 4).length
   const fincasCumplen = fincas.filter(f => f.estado === 'cumple').length
   const lotesCumplen = lotes.filter(l => l.estado === 'cumple')
   const porcentajeCumple = lotes.length ? Math.round((lotesCumplen.length / lotes.length) * 100) : 0
   const alertas = fincas.filter(f => f.alerta)
   const kgListos = lotesCumplen.reduce((total, lote) => total + lote.kg, 0)
-  const declaracion = construirDeclaracion(conPoligono, alertas.length)
+  const declaracion = construirDeclaracion(lotes, conPoligono, alertas.length)
 
   useEffect(() => {
     if (modalAbierto && !dialogRef.current?.open) dialogRef.current?.showModal()
+  }, [modalAbierto])
+
+  useEffect(() => () => {
+    if (temporizadorRef.current !== null) window.clearTimeout(temporizadorRef.current)
+  }, [])
+
+  useEffect(() => {
+    if (!modalAbierto) return
+    setRedactando(true)
+    if (temporizadorRef.current !== null) window.clearTimeout(temporizadorRef.current)
+    temporizadorRef.current = window.setTimeout(() => {
+      setRedactando(false)
+      temporizadorRef.current = null
+    }, 1200)
+    return () => {
+      if (temporizadorRef.current !== null) window.clearTimeout(temporizadorRef.current)
+    }
   }, [modalAbierto])
 
   const cerrarModal = () => dialogRef.current?.close()
@@ -129,7 +150,7 @@ export default function Cumplimiento() {
   }
 
   const exportarEpcis = () => {
-    const documento = construirEpcis()
+    const documento = construirEpcis(lotes)
     const blob = new Blob([JSON.stringify(documento, null, 2)], { type: 'application/json;charset=utf-8' })
     const url = URL.createObjectURL(blob)
     const enlace = document.createElement('a')
@@ -290,6 +311,7 @@ export default function Cumplimiento() {
                 <article className="cumpl-alerta" key={finca.id}>
                   <div className="cumpl-alerta-cabecera">
                     <span className="chip chip-riesgo">Alerta GLAD/GFW</span>
+                    <span className="chip chip-ia">IA · verificación satelital GLAD/GFW</span>
                     <span className="cumpl-alerta-fecha">{finca.municipio}, {finca.departamento}</span>
                   </div>
                   <p className="cumpl-alerta-texto">{finca.alerta}</p>
@@ -324,8 +346,17 @@ export default function Cumplimiento() {
           </div>
           <button className="boton-fantasma" type="button" aria-label="Cerrar" onClick={cerrarModal}>✕</button>
         </div>
-        <pre className="cumpl-declaracion">{declaracion}</pre>
-        <p className="cumpl-nota-ia">Borrador redactado por Azure OpenAI (simulado); requiere revisión humana.</p>
+        {redactando ? (
+          <p className="cumpl-redactando" role="status" aria-live="polite" aria-label="Redactando con IA…">
+            Redactando con IA
+            <span className="cumpl-puntos" aria-hidden="true">
+              <span>.</span><span>.</span><span>.</span>
+            </span>
+          </p>
+        ) : (
+          <pre className="cumpl-declaracion">{declaracion}</pre>
+        )}
+        <p className="cumpl-pastilla-ia">Borrador generado por IA · requiere revisión humana</p>
         <div className="cumpl-modal-pie">
           <button className="boton" type="button" onClick={cerrarModal}>Entendido</button>
         </div>

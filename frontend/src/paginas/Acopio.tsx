@@ -1,7 +1,8 @@
 ﻿import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { etiquetaEstado, fincas, lugares, lotes } from '../datos'
+import { etiquetaEstado, fincas, lugares } from '../datos'
 import type { EstadoEudr, Lote } from '../datos'
+import { guardarLote, todosLosLotes } from '../registro'
 import { encolar, haySenal, leerCola, sincronizar } from '../offline'
 import type { RegistroOffline } from '../offline'
 import './Acopio.css'
@@ -92,7 +93,7 @@ export default function Acopio() {
   const [kg, setKg] = useState('640')
   const [humedad, setHumedad] = useState('11.2')
   const [puntaje, setPuntaje] = useState('86')
-  const [lotesHoy, setLotesHoy] = useState<Lote[]>(lotes)
+  const [lotesHoy, setLotesHoy] = useState<Lote[]>(() => todosLosLotes())
   const [creado, setCreado] = useState<Lote | null>(null)
   const [error, setError] = useState('')
   const [enLinea, setEnLinea] = useState(haySenal)
@@ -195,8 +196,10 @@ export default function Acopio() {
         },
       ],
     }
-    setLotesHoy(anteriores => [nuevo, ...anteriores])
+    const guardado = guardarLote(nuevo)
+    setLotesHoy(todosLosLotes())
     setCreado(nuevo)
+    if (!guardado) setError('El lote se creó, pero no se pudo guardar en este dispositivo.')
     setKg('')
     setCreando(true)
     if (temporizadorRef.current !== null) window.clearTimeout(temporizadorRef.current)
@@ -243,6 +246,7 @@ export default function Acopio() {
                 <input
                   type="checkbox"
                   checked={seleccion.includes(finca.id)}
+                  aria-label={`Incluir finca ${finca.nombre}`}
                   onChange={() => alternarFinca(finca.id)}
                 />
                 <span aria-hidden="true">🌱</span>
@@ -321,8 +325,12 @@ export default function Acopio() {
                 <p>El código QR aparece al crear el lote.</p>
               </div>
             )}
-            <Link className="acopio-enlace" to="/lote/LT-2026-0412">Ver pasaporte de ejemplo</Link>
-            <small className="acopio-qr-pie">Ejemplo: /lote/LT-2026-0412</small>
+            {creado && (
+              <>
+                <Link className="acopio-enlace" to={`/lote/${creado.id}`}>Ver pasaporte de este lote</Link>
+                <small className="acopio-qr-pie">Ruta: /lote/{creado.id}</small>
+              </>
+            )}
           </div>
 
           <div className="vidrio acopio-lotes">
@@ -342,11 +350,11 @@ export default function Acopio() {
               {lotesHoy.map(lote => (
                 <div className="acopio-fila" role="row" key={lote.id}>
                   <strong role="cell">{lote.id}</strong>
-                  <span role="cell">{lote.fincaIds.length} {lote.fincaIds.length === 1 ? 'finca' : 'fincas'}</span>
-                  <span role="cell">{lote.kg.toLocaleString('es-CO')}</span>
-                  <span role="cell">{lote.humedad} %</span>
-                  <span role="cell">{lote.puntaje}</span>
-                  <span role="cell"><span className={`chip chip-${lote.estado}`}>{etiquetaEstado[lote.estado]}</span></span>
+                  <span role="cell" data-etiqueta="Fincas">{lote.fincaIds.length} {lote.fincaIds.length === 1 ? 'finca' : 'fincas'}</span>
+                  <span role="cell" data-etiqueta="Kg">{lote.kg.toLocaleString('es-CO')}</span>
+                  <span role="cell" data-etiqueta="Humedad">{lote.humedad.toLocaleString('es-CO')} %</span>
+                  <span role="cell" data-etiqueta="Taza">{lote.puntaje}</span>
+                  <span role="cell" data-etiqueta="Estado"><span className={`chip chip-${lote.estado}`}>{etiquetaEstado[lote.estado]}</span></span>
                 </div>
               ))}
             </div>

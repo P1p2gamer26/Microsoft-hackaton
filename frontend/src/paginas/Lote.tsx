@@ -1,5 +1,6 @@
 ﻿import { Link, useParams } from 'react-router-dom'
-import { colorEstado, etiquetaEstado, fincas, lotes, type Coord, type Etapa, type EventoLote } from '../datos'
+import { colorEstado, etiquetaEstado, fincas, type Coord, type Etapa, type EventoLote } from '../datos'
+import { todosLosLotes } from '../registro'
 import './Lote.css'
 
 const recorrido: { etapa: Etapa; icono: string; titulo: string }[] = [
@@ -41,7 +42,7 @@ function puntosPoligono(poligono: Coord[]) {
 
 export default function Lote() {
   const { id } = useParams<{ id: string }>()
-  const lote = lotes.find(item => item.id === id)
+  const lote = todosLosLotes().find(item => item.id === id)
 
   if (!lote) {
     return (
@@ -62,6 +63,11 @@ export default function Lote() {
   })
   const verificado = lote.estado === 'cumple' && origen.length > 0 && origen.every(finca => finca.estado === 'cumple')
   const eventos = [...lote.eventos].sort((a, b) => a.fecha.localeCompare(b.fecha))
+  const fincasAlerta = origen.filter(finca => Boolean(finca.alerta))
+  const textosAlerta = fincasAlerta.flatMap(finca => finca.alerta ? [finca.alerta] : [])
+  const etapasPendientes = recorrido
+    .filter(paso => !eventos.some(evento => evento.etapa === paso.etapa))
+    .map(paso => paso.titulo)
   const etapasRegistradas = new Set(eventos.map(evento => evento.etapa)).size
   const hitos: Hito[] = recorrido.flatMap((paso): Hito[] => {
     const delPaso = eventos.filter(evento => evento.etapa === paso.etapa)
@@ -80,11 +86,26 @@ export default function Lote() {
       <header className="vidrio lote-cabecera">
         <div className="lote-cabecera-principal">
           <p className="lote-ojeada">Pasaporte digital · GS1</p>
+          <span className="lote-sello-ia">Datos propuestos por IA · confirmados por persona</span>
           <div className="lote-titulo-fila">
             <h1>{lote.id}</h1>
             <span className={`chip chip-${lote.estado}`}>{etiquetaEstado[lote.estado]}</span>
           </div>
-          <p className="lote-bajada">De la finca al puerto, con evidencia en cada etapa.</p>
+          {lote.estado === 'riesgo' && (
+            <div className="lote-banner lote-banner-riesgo" role="alert">
+              <strong>Lote bloqueado para la UE: alerta de deforestación en {fincasAlerta.map(finca => finca.nombre).join(', ') || 'un origen sin identificar'}</strong>
+              <p>{textosAlerta.join('; ') || 'Alerta de deforestación sobre los polígonos del lote, pendiente de verificación.'}</p>
+            </div>
+          )}
+          {lote.estado === 'revision' && (
+            <div className="lote-banner lote-banner-revision" role="status">
+              <strong>En revisión: faltan evidencias</strong>
+              <p>Etapas pendientes: {etapasPendientes.length ? etapasPendientes.join(', ') : 'verificación de evidencias y humedad'}.</p>
+            </div>
+          )}
+          <p className="lote-bajada">
+            {lote.estado === 'cumple' ? 'De la finca al puerto, con evidencia en cada etapa.' : 'Recorrido parcial.'}
+          </p>
           {verificado && (
             <p className="lote-sello lote-sello-grande" role="img" aria-label="Verificado sin deforestación">
               <span aria-hidden>✓</span> Verificado sin deforestación (GFW/GLAD)
@@ -146,7 +167,11 @@ export default function Lote() {
             <div className="lote-bloque-cabecera">
               <div>
                 <h2 id="fincas-titulo">Fincas de origen</h2>
-                <p className="lote-suave">Polígonos verificados contra deforestación.</p>
+                <p className="lote-suave">
+                  {lote.estado === 'cumple'
+                    ? 'Polígonos verificados contra deforestación.'
+                    : 'Polígonos registrados; verificación pendiente.'}
+                </p>
               </div>
             </div>
             <div className="lote-fincas">
@@ -186,11 +211,12 @@ export default function Lote() {
             </div>
           </section>
 
-          <section className="vidrio lote-bloque lote-nota">
-            <h2>Trazabilidad lista para el mercado</h2>
+          <section className={`vidrio lote-bloque lote-nota${lote.estado === 'cumple' ? '' : ' lote-nota-pendiente'}`}>
+            <h2>{lote.estado === 'cumple' ? 'Trazabilidad lista para el mercado' : 'Aún no apto para exportar'}</h2>
             <p className="lote-suave">
-              El pasaporte reúne los eventos EPCIS 2.0, los polígonos de origen y la evaluación EUDR
-              exigida por la UE 2023/1115. Anke puede contrastar cada dato antes de recibir el café.
+              {lote.estado === 'cumple'
+                ? 'El pasaporte reúne los eventos EPCIS 2.0, los polígonos de origen y la evaluación EUDR exigida por la UE 2023/1115. Anke puede contrastar cada dato antes de recibir el café.'
+                : 'El pasaporte reúne los registros disponibles, pero faltan evidencias o hay alertas activas. No debe presentarse como libre de deforestación ante la UE hasta completar la verificación.'}
             </p>
           </section>
         </div>

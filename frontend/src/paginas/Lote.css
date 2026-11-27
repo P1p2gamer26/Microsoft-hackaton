@@ -45,6 +45,39 @@
 }
 .lote-sello span { display: grid; place-items: center; width: 16px; height: 16px; border-radius: 50%; background: var(--verde); color: #06301f; font-size: 11px; }
 .lote-sello-grande { font-size: 12px; }
+.lote-sello-ia {
+  display: inline-flex;
+  align-self: flex-start;
+  padding: 4px 10px;
+  border: 1px solid var(--borde);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--texto-suave);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.lote-banner {
+  padding: 14px 16px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  line-height: 1.5;
+}
+.lote-banner strong { display: block; font-size: clamp(15px, 1.6vw, 19px); line-height: 1.35; }
+.lote-banner p { margin: 8px 0 0; font-size: 13px; }
+.lote-banner-riesgo {
+  padding: 18px 20px;
+  border-color: rgba(248, 113, 113, 0.55);
+  background: rgba(248, 113, 113, 0.14);
+  color: #fecaca;
+}
+.lote-banner-riesgo strong { font-size: clamp(16px, 2vw, 22px); }
+.lote-banner-revision {
+  border-color: rgba(251, 191, 36, 0.5);
+  background: rgba(251, 191, 36, 0.12);
+  color: #fde68a;
+}
 
 .lote-datos { margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-content: start; }
 .lote-datos div { padding: 12px 14px; border: 1px solid var(--borde); border-radius: 12px; background: rgba(0, 0, 0, 0.16); }
@@ -112,6 +145,8 @@
 .lote-finca .lote-sello { margin-top: 10px; font-size: 10px; }
 .lote-alerta { margin: 10px 0 0; padding: 8px 10px; border-radius: 8px; background: rgba(248, 113, 113, 0.1); color: var(--rojo); font-size: 11px; line-height: 1.45; }
 .lote-nota h2 { font-size: 17px; }
+.lote-nota-pendiente { border-color: rgba(251, 191, 36, 0.35); }
+.lote-nota-pendiente h2 { color: var(--ambar); }
 
 @keyframes lote-aparecer {
   from { opacity: 0; transform: translateY(12px); }
