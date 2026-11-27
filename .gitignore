@@ -1,0 +1,19 @@
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+
+# Local / secretos
+.env
+*.log
+*.tmp
+
+# Binarios e instaladores descargados
+*.exe
+*.msi
+*.zip
+
+# Sistemas operativos
+.DS_Store
+Thumbs.db
