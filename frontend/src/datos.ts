@@ -42,23 +42,50 @@ export interface Lote {
 
 export interface Puerto { id: string; nombre: string; coord: Coord; participacion: number }
 
-const cuadro = (lng: number, lat: number, ha: number, giro = 0): Coord[] => {
-  const lado = Math.sqrt(ha * 10000) / 111320 // grados aprox.
-  const pts: Coord[] = [[0, 0], [1, 0.15], [0.9, 1.05], [-0.1, 0.9]].map(([x, y]) => {
-    const rx = x * Math.cos(giro) - y * Math.sin(giro)
-    const ry = x * Math.sin(giro) + y * Math.cos(giro)
-    return [+(lng + rx * lado).toFixed(6), +(lat + ry * lado).toFixed(6)]
+const METROS_POR_GRADO = 111320
+
+const mulberry32 = (semilla: number) => {
+  let estado = semilla >>> 0
+  return () => {
+    estado = (estado + 0x6d2b79f5) >>> 0
+    let t = estado
+    t = Math.imul(t ^ (t >>> 15), t | 1)
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+}
+
+const promedio = (valores: number[]) => valores.reduce((s, v) => s + v, 0) / valores.length
+
+const poligono = (lng: number, lat: number, ha: number, semilla: number): Coord[] => {
+  const azar = mulberry32(semilla)
+  const n = 7 + Math.floor(azar() * 4)
+  const giro = azar() * Math.PI * 2
+  const radios = Array.from({ length: n }, () => 0.75 + azar() * 0.5)
+  const areaUnitaria = 0.5 * Math.sin((2 * Math.PI) / n) * radios.reduce((s, r, i) => s + r * radios[(i + 1) % n], 0)
+  const escala = Math.sqrt((ha * 10000) / areaUnitaria)
+  const porLng = escala / (METROS_POR_GRADO * Math.cos(lat * Math.PI / 180))
+  const porLat = escala / METROS_POR_GRADO
+  const desplazamientos = radios.map((r, i) => {
+    const angulo = giro + (i * 2 * Math.PI) / n
+    return [r * Math.cos(angulo) * porLng, r * Math.sin(angulo) * porLat]
   })
+  const lngMedio = promedio(desplazamientos.map(d => d[0]))
+  const latMedio = promedio(desplazamientos.map(d => d[1]))
+  const pts: Coord[] = desplazamientos.map(([dx, dy]) => [
+    +(lng + dx - lngMedio).toFixed(6),
+    +(lat + dy - latMedio).toFixed(6),
+  ])
   return [...pts, pts[0]]
 }
 
 export const fincas: Finca[] = [
-  { id: 'F-HU-001', nombre: 'La Esperanza', productor: 'Rosa Elvira Cuéllar', municipio: 'Pitalito', departamento: 'Huila', hectareas: 1.4, altitud: 1650, variedad: 'Castillo', poligono: cuadro(-76.0712, 1.8521, 1.4, 0.3), estado: 'cumple' },
-  { id: 'F-HU-002', nombre: 'El Mirador', productor: 'Jairo Ortiz', municipio: 'Pitalito', departamento: 'Huila', hectareas: 2.1, altitud: 1720, variedad: 'Caturra', poligono: cuadro(-76.0655, 1.8580, 2.1, -0.2), estado: 'cumple' },
-  { id: 'F-HU-003', nombre: 'Buenavista', productor: 'Marleny Rojas', municipio: 'Acevedo', departamento: 'Huila', hectareas: 1.1, altitud: 1580, variedad: 'Cenicafé 1', poligono: cuadro(-75.8890, 1.8050, 1.1, 0.6), estado: 'revision' },
-  { id: 'F-HU-004', nombre: 'Los Naranjos', productor: 'Edilberto Perdomo', municipio: 'San Agustín', departamento: 'Huila', hectareas: 1.8, altitud: 1800, variedad: 'Castillo', poligono: cuadro(-76.2985, 1.8705, 1.8, 0.1), estado: 'riesgo', alerta: 'Alerta GLAD: pérdida de cobertura arbórea de 0,3 ha (ago-2026)' },
-  { id: 'F-CA-001', nombre: 'La Cumbre', productor: 'Hernán Muñoz (cooperativa)', municipio: 'Popayán', departamento: 'Cauca', hectareas: 0.8, altitud: 1850, variedad: 'Tabi', poligono: cuadro(-76.5520, 2.4790, 0.8, -0.4), estado: 'cumple' },
-  { id: 'F-CA-002', nombre: 'El Paraíso', productor: 'Luz Dary Chicangana', municipio: 'Inzá', departamento: 'Cauca', hectareas: 0.7, altitud: 1900, variedad: 'Caturra', poligono: cuadro(-76.0640, 2.5530, 0.7, 0.8), estado: 'revision' },
+  { id: 'F-HU-001', nombre: 'La Esperanza', productor: 'Rosa Elvira Cuéllar', municipio: 'Pitalito', departamento: 'Huila', hectareas: 1.4, altitud: 1650, variedad: 'Castillo', poligono: poligono(-76.0712, 1.8521, 1.4, 101), estado: 'cumple' },
+  { id: 'F-HU-002', nombre: 'El Mirador', productor: 'Jairo Ortiz', municipio: 'Pitalito', departamento: 'Huila', hectareas: 2.1, altitud: 1720, variedad: 'Caturra', poligono: poligono(-76.0655, 1.8580, 2.1, 202), estado: 'cumple' },
+  { id: 'F-HU-003', nombre: 'Buenavista', productor: 'Marleny Rojas', municipio: 'Acevedo', departamento: 'Huila', hectareas: 1.1, altitud: 1580, variedad: 'Cenicafé 1', poligono: poligono(-75.8890, 1.8050, 1.1, 303), estado: 'revision' },
+  { id: 'F-HU-004', nombre: 'Los Naranjos', productor: 'Edilberto Perdomo', municipio: 'San Agustín', departamento: 'Huila', hectareas: 1.8, altitud: 1800, variedad: 'Castillo', poligono: poligono(-76.2985, 1.8705, 1.8, 404), estado: 'riesgo', alerta: 'Alerta GLAD: pérdida de cobertura arbórea de 0,3 ha (ago-2026)' },
+  { id: 'F-CA-001', nombre: 'La Cumbre', productor: 'Hernán Muñoz (cooperativa)', municipio: 'Popayán', departamento: 'Cauca', hectareas: 0.8, altitud: 1850, variedad: 'Tabi', poligono: poligono(-76.5520, 2.4790, 0.8, 505), estado: 'cumple' },
+  { id: 'F-CA-002', nombre: 'El Paraíso', productor: 'Luz Dary Chicangana', municipio: 'Inzá', departamento: 'Cauca', hectareas: 0.7, altitud: 1900, variedad: 'Caturra', poligono: poligono(-76.0640, 2.5530, 0.7, 606), estado: 'revision' },
 ]
 
 export const puertos: Puerto[] = [
@@ -82,7 +109,10 @@ export const rutaHuilaBuenaventura: Coord[] = [
 const ev = (etapa: Etapa, fecha: string, l: { nombre: string; coord: Coord }, detalle: string, registradoPor: string, canal: EventoLote['canal']): EventoLote =>
   ({ etapa, fecha, lugar: l.nombre, coord: l.coord, detalle, registradoPor, canal })
 
-const centro = (f: Finca): Coord => f.poligono[0]
+const centro = (f: Finca): Coord => {
+  const pts = f.poligono.length > 1 ? f.poligono.slice(0, -1) : f.poligono
+  return [promedio(pts.map(p => p[0])), promedio(pts.map(p => p[1]))]
+}
 const finca = (id: string) => fincas.find(f => f.id === id)!
 
 export const lotes: Lote[] = [
@@ -129,4 +159,26 @@ export const estiloSatelite = {
   layers: [{ id: 'satelite', type: 'raster' as const, source: 'satelite' }],
   terrain: { source: 'terreno', exaggeration: 1.6 },
   sky: { 'sky-color': '#0b1220', 'horizon-color': '#3b2a1e', 'fog-color': '#1a140f', 'sky-horizon-blend': 0.6, 'horizon-fog-blend': 0.6 },
+}
+
+export function areaHa(poligono: Coord[]): number {
+  if (poligono.length < 3) return 0
+  const latMedia = promedio(poligono.map(p => p[1])) * Math.PI / 180
+  let dobleArea = 0
+  for (let i = 0; i < poligono.length; i++) {
+    const actual = poligono[i]
+    const siguiente = poligono[(i + 1) % poligono.length]
+    dobleArea += actual[0] * METROS_POR_GRADO * Math.cos(latMedia) * siguiente[1] * METROS_POR_GRADO
+      - siguiente[0] * METROS_POR_GRADO * Math.cos(latMedia) * actual[1] * METROS_POR_GRADO
+  }
+  return Math.abs(dobleArea) / 2 / 10000
+}
+
+if (import.meta.env.DEV) {
+  for (const f of fincas) {
+    const area = areaHa(f.poligono)
+    if (area < f.hectareas * 0.7 || area > f.hectareas * 1.3) {
+      console.warn(`Área inconsistente en ${f.nombre}: ${area.toFixed(2)} ha vs ${f.hectareas} ha declaradas`)
+    }
+  }
 }
