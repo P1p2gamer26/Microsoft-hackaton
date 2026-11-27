@@ -28,7 +28,7 @@
 | Blueprint de Render (web + api + agente + Postgres/PostGIS) | ✅ | `render.yaml`, `DEPLOY.md` |
 | Backend corriendo en local con JDK 21 + H2 | 🔄 de validación | dependencias Maven descargándose en el arranque |
 | `iniciar-demo.ps1` (backend + frontend + analytics opcional) | ✅ | detecta JDK 21 y Maven portable; Ollama/agente quedan en pausa (se arrancan aparte con `agent/start.ps1`) |
-| Pantallas conectadas a Buyers / Comparador / Copiloto | ❌ | `Compradores.tsx` aún usa `datos.ts` con etiqueta "demo"; no hay pantalla de Comparador ni de Copiloto |
+| Módulo comercial completo de Coffee Value Bridge | ✅ | 14 pantallas portadas a `frontend/src/cvb/` y montadas en `/cvb`; login compartido con CaféTrace, Tailwind aislado y verificado en navegador |
 | IA aplicada a Campo y Declaración EUDR | ❌ | hay plan en `plan_ia_ollama.md`, pero los endpoints `/ia/*` no existen |
 | Analytics desplegado en Render | ❌ | el servicio Flask no está en `render.yaml` |
 | Guion de pitch y video de respaldo | ❌ | borrador en `plan_mejoras.md` |
@@ -64,15 +64,17 @@ RENDER (demo pública)
 
 **Hecho cuando:** con todo apagado, `.\iniciar-demo.ps1` deja la demo usable en menos de 3 minutos (salvo primera descarga de dependencias).
 
-### Tanda B — Conectar lo que falta del motor comercial (1–2 h)
-**Archivos:** `frontend/src/paginas/Compradores.tsx`, nuevo `frontend/src/paginas/Comparador.tsx`, nuevo `frontend/src/paginas/Copiloto.tsx`, `App.tsx`, `api.ts`.
+### Tanda B — Módulo comercial completo (hecho)
+**Archivos:** `frontend/src/cvb/**`, `frontend/src/App.tsx`, `frontend/package.json`, `frontend/tailwind.config.js`, `frontend/postcss.config.js`.
 
-1. **Compradores:** reemplazar `compradoresDemo` por `GET /api/v1/buyers` (con token demo), manteniendo respaldo a `datos.ts` y la etiqueta `DEMO`/`API` que ya existe.
-2. **Comparador:** pantalla nueva con el payload de `POST /api/v1/comparator/simulate` ( verde 4.8 USD/kg vs tostado 11 USD/kg, costo 3.5 + tostión 1.2, merma 15 %). Mostrar utilidad y capital necesario.
-3. **Copiloto:** panel con `POST /api/chat` del agente. Mostrar `answer`, `sources` (clicables) y `mode` (`tools` / `direct` / `context` / `offline`). El motor de reglas del backend (`POST /api/v1/copilot/analyze`) queda como respaldo y se etiqueta como tal.
-4. Registrar las tres rutas nuevas en el menú, filtradas por persona (Laura/Anke ven Compradores y Comparador; Hernán, el copiloto de campo).
+1. **Portadas las 14 pantallas** de `legacy/cvb-frontend`: dashboard, radar de mercados, buscador de compradores, CRM, inventario, comparador verde/tostado, GIS, copiloto de exportación, pedidos, time to market, finanzas, reportes, administración y login.
+2. Montadas en `/cvb/*` dentro del `HashRouter` de CaféTrace, con menú "Módulo comercial" visible para todas las personas.
+3. **Sesión compartida:** el cliente CVB lee primero `sessionStorage.cafetrace-token`; el login CVB escribe en ambos almacenes y decodifica el JWT para obtener roles/permisos.
+4. **Estilos aislados:** Tailwind con `preflight: false` y una clase `.cvb-root` envolvente (cream `#F4EFE5`, verde `#173D32`, Inter). El tema oscuro de CaféTrace no se altera.
 
-**Hecho cuando:** apagando el backend las pantallas siguen mostrando datos demo con etiqueta; encendiéndolo, muestran datos reales y el copiloto cita fuentes.
+**Hecho cuando:** en `http://localhost:5173/#/cvb` cargan dashboard, radar, compradores y admin con datos del backend, sin errores de consola; CaféTrace sigue en `#/`.
+
+**Pendiente menor:** el panel "Compradores" de CaféTrace (`paginas/Compradores.tsx`) todavía usa `datos.ts` con etiqueta demo; el buscador real ya está en `#/cvb/buyers`.
 
 ### Tanda C — IA en el flujo de campo y cumplimiento (2 h) · EN PAUSA
 > Por decisión del equipo, Ollama y el agente se dejan a un lado temporalmente; se arrancan aparte con `agent/start.ps1` y no bloquean la integración CaféTrace + Coffee Value Bridge.
