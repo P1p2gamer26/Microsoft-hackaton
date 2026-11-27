@@ -29,6 +29,8 @@
 | Backend corriendo en local con JDK 21 + H2 | 🔄 de validación | dependencias Maven descargándose en el arranque |
 | `iniciar-demo.ps1` (backend + frontend + analytics opcional) | ✅ | detecta JDK 21 y Maven portable; Ollama/agente quedan en pausa (se arrancan aparte con `agent/start.ps1`) |
 | Módulo comercial completo de Coffee Value Bridge | ✅ | 14 pantallas de `origin/main` integradas en `frontend/src/paginas/comercial/` y montadas en `/comercial/*` dentro de CaféTrace; mismo tema visual y verificado en navegador |
+| Temas visuales unificados | ✅ | tokens en `index.css`; selector Café / Claro / Blanco y negro en la barra lateral, persistido en `localStorage` |
+| Manejo de errores del backend | ✅ | `GlobalExceptionHandler` convierte datos inválidos en 400 con mensaje en español; `BodyValues` evita el literal `"null"` en los formularios; LLM del copiloto desactivado por defecto (`LLM_ENABLED=false`) con timeout de 8 s |
 | IA aplicada a Campo y Declaración EUDR | ❌ | hay plan en `plan_ia_ollama.md`, pero los endpoints `/ia/*` no existen |
 | Analytics desplegado en Render | ❌ | el servicio Flask no está en `render.yaml` |
 | Guion de pitch y video de respaldo | ❌ | borrador en `plan_mejoras.md` |

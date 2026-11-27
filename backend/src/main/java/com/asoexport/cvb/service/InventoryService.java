@@ -1,6 +1,7 @@
 package com.asoexport.cvb.service;
 
 import com.asoexport.cvb.common.ApiException;
+import com.asoexport.cvb.common.BodyValues;
 import com.asoexport.cvb.common.DataProvenance;
 import com.asoexport.cvb.common.TenantContext;
 import com.asoexport.cvb.domain.*;
@@ -138,22 +139,22 @@ public class InventoryService {
         Long companyId = TenantContext.resolveCompanyId(null);
         Product p = new Product();
         p.setCompanyId(companyId);
-        p.setSku(String.valueOf(body.get("sku")));
-        p.setCommercialName(String.valueOf(body.get("commercialName")));
-        p.setCoffeeType(String.valueOf(body.getOrDefault("coffeeType", "SPECIALTY")));
-        p.setHsCode(String.valueOf(body.getOrDefault("hsCode", "090121")));
-        p.setDepartment(String.valueOf(body.getOrDefault("department", "Huila")));
-        p.setMunicipality(String.valueOf(body.getOrDefault("municipality", "")));
-        p.setFarmOrLotSource(String.valueOf(body.getOrDefault("farmOrLotSource", "")));
-        p.setVariety(String.valueOf(body.getOrDefault("variety", "Castillo")));
-        p.setRoastProfile(String.valueOf(body.getOrDefault("roastProfile", "MEDIUM")));
-        p.setGrindType(String.valueOf(body.getOrDefault("grindType", "WHOLE_BEAN")));
-        p.setPackagingType(String.valueOf(body.getOrDefault("packagingType", "Bolsa con válvula desgasificadora")));
-        p.setPresentation(String.valueOf(body.getOrDefault("presentation", "340g")));
-        p.setUnitPriceUsdKg(new BigDecimal(String.valueOf(body.get("unitPriceUsdKg"))));
-        p.setMinOrderKg(new BigDecimal(String.valueOf(body.getOrDefault("minOrderKg", "100"))));
-        p.setValidatedShelfLifeDays(Integer.valueOf(String.valueOf(body.getOrDefault("validatedShelfLifeDays", "365"))));
-        p.setCertifications(String.valueOf(body.getOrDefault("certifications", "")));
+        p.setSku(BodyValues.requiredText(body, "sku", "sku"));
+        p.setCommercialName(BodyValues.requiredText(body, "commercialName", "commercialName"));
+        p.setCoffeeType(BodyValues.text(body, "coffeeType", "SPECIALTY"));
+        p.setHsCode(BodyValues.text(body, "hsCode", "090121"));
+        p.setDepartment(BodyValues.text(body, "department", "Huila"));
+        p.setMunicipality(BodyValues.text(body, "municipality", ""));
+        p.setFarmOrLotSource(BodyValues.text(body, "farmOrLotSource", ""));
+        p.setVariety(BodyValues.text(body, "variety", "Castillo"));
+        p.setRoastProfile(BodyValues.text(body, "roastProfile", "MEDIUM"));
+        p.setGrindType(BodyValues.text(body, "grindType", "WHOLE_BEAN"));
+        p.setPackagingType(BodyValues.text(body, "packagingType", "Bolsa con válvula desgasificadora"));
+        p.setPresentation(BodyValues.text(body, "presentation", "340g"));
+        p.setUnitPriceUsdKg(BodyValues.decimal(body, "unitPriceUsdKg", "unitPriceUsdKg"));
+        p.setMinOrderKg(new BigDecimal(BodyValues.text(body, "minOrderKg", "100")));
+        p.setValidatedShelfLifeDays(BodyValues.integer(body, "validatedShelfLifeDays", 365));
+        p.setCertifications(BodyValues.text(body, "certifications", ""));
         p.setDataProvenance(DataProvenance.USER_INPUT);
         p.setCreatedBy(TenantContext.require().email());
         p = productRepo.save(p);
@@ -170,23 +171,21 @@ public class InventoryService {
     @Transactional
     public CoffeeLot createLot(Map<String, Object> body) {
         Long companyId = TenantContext.resolveCompanyId(null);
-        Long productId = Long.valueOf(String.valueOf(body.get("productId")));
+        Long productId = BodyValues.id(body, "productId", "productId");
         Product prod = productRepo.findById(productId).orElseThrow(() -> new ApiException(404, "Producto no encontrado"));
         TenantContext.assertCompanyAccess(prod.getCompanyId());
 
-        LocalDate prodDate = LocalDate.parse(String.valueOf(body.getOrDefault("productionDate", LocalDate.now().toString())));
-        LocalDate roastDate = LocalDate.parse(String.valueOf(body.getOrDefault("roastDate", LocalDate.now().toString())));
-        LocalDate packDate = LocalDate.parse(String.valueOf(body.getOrDefault("packagingDate", LocalDate.now().toString())));
+        LocalDate prodDate = BodyValues.date(body, "productionDate", LocalDate.now());
+        LocalDate roastDate = BodyValues.date(body, "roastDate", LocalDate.now());
+        LocalDate packDate = BodyValues.date(body, "packagingDate", LocalDate.now());
         // Validated shelf life starts from packaging/manufacturer validation, NOT confusing roast date with expiration
-        LocalDate limitDate = body.get("recommendedCommercialLimitDate") != null && !String.valueOf(body.get("recommendedCommercialLimitDate")).isBlank()
-                ? LocalDate.parse(String.valueOf(body.get("recommendedCommercialLimitDate")))
-                : packDate.plusDays(prod.getValidatedShelfLifeDays());
-        BigDecimal qty = new BigDecimal(String.valueOf(body.get("initialKg")));
+        LocalDate limitDate = BodyValues.date(body, "recommendedCommercialLimitDate", packDate.plusDays(prod.getValidatedShelfLifeDays()));
+        BigDecimal qty = BodyValues.decimal(body, "initialKg", "initialKg");
 
         CoffeeLot lot = new CoffeeLot();
         lot.setCompanyId(companyId);
         lot.setProductId(productId);
-        lot.setLotCode(String.valueOf(body.get("lotCode")));
+        lot.setLotCode(BodyValues.requiredText(body, "lotCode", "lotCode"));
         lot.setProductionDate(prodDate);
         lot.setRoastDate(roastDate);
         lot.setPackagingDate(packDate);
@@ -219,12 +218,12 @@ public class InventoryService {
 
     @Transactional
     public CoffeeLot recordMovement(Map<String, Object> body) {
-        Long lotId = Long.valueOf(String.valueOf(body.get("lotId")));
+        Long lotId = BodyValues.id(body, "lotId", "lotId");
         CoffeeLot lot = lotRepo.findById(lotId).orElseThrow(() -> new ApiException(404, "Lote no encontrado"));
         TenantContext.assertCompanyAccess(lot.getCompanyId());
 
-        String type = String.valueOf(body.get("movementType")).toUpperCase();
-        BigDecimal qty = new BigDecimal(String.valueOf(body.get("quantityKg")));
+        String type = BodyValues.requiredText(body, "movementType", "movementType").toUpperCase();
+        BigDecimal qty = BodyValues.decimal(body, "quantityKg", "quantityKg");
         if (qty.compareTo(BigDecimal.ZERO) <= 0) {
             throw new ApiException(400, "La cantidad del movimiento debe ser mayor a 0 kg");
         }

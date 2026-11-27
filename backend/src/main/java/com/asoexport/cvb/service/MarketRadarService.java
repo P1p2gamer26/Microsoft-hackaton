@@ -1,6 +1,7 @@
 package com.asoexport.cvb.service;
 
 import com.asoexport.cvb.common.ApiException;
+import com.asoexport.cvb.common.BodyValues;
 import com.asoexport.cvb.common.DataProvenance;
 import com.asoexport.cvb.domain.Country;
 import com.asoexport.cvb.domain.MarketStatistic;
@@ -140,22 +141,23 @@ public class MarketRadarService {
 
     @Transactional
     public Country addCountry(Map<String, Object> body) {
-        String iso2 = String.valueOf(body.get("iso2")).trim().toUpperCase();
-        String iso3 = String.valueOf(body.getOrDefault("iso3", iso2 + "X")).trim().toUpperCase();
+        String iso2 = BodyValues.requiredText(body, "iso2", "iso2").toUpperCase();
+        String iso3 = BodyValues.text(body, "iso3", iso2 + "X").toUpperCase();
         if (countryRepo.findByIso2(iso2).isPresent()) {
             throw new ApiException(409, "El país " + iso2 + " ya existe");
         }
         Country c = new Country();
         c.setIso2(iso2);
         c.setIso3(iso3.substring(0, Math.min(3, iso3.length())));
-        c.setNameEs(String.valueOf(body.get("nameEs")));
-        c.setNameEn(String.valueOf(body.getOrDefault("nameEn", body.get("nameEs"))));
-        c.setRegion(String.valueOf(body.getOrDefault("region", "Internacional")));
-        c.setCurrencyCode(String.valueOf(body.getOrDefault("currencyCode", "USD")));
-        c.setDefaultTariffPct(new BigDecimal(String.valueOf(body.getOrDefault("defaultTariffPct", "0"))));
-        c.setRegulatoryComplexityScore(new BigDecimal(String.valueOf(body.getOrDefault("regulatoryComplexityScore", "60"))));
-        c.setLatitude(Double.valueOf(String.valueOf(body.getOrDefault("latitude", "0"))));
-        c.setLongitude(Double.valueOf(String.valueOf(body.getOrDefault("longitude", "0"))));
+        String nombre = BodyValues.requiredText(body, "nameEs", "nameEs");
+        c.setNameEs(nombre);
+        c.setNameEn(BodyValues.text(body, "nameEn", nombre));
+        c.setRegion(BodyValues.text(body, "region", "Internacional"));
+        c.setCurrencyCode(BodyValues.text(body, "currencyCode", "USD"));
+        c.setDefaultTariffPct(new BigDecimal(BodyValues.text(body, "defaultTariffPct", "0")));
+        c.setRegulatoryComplexityScore(new BigDecimal(BodyValues.text(body, "regulatoryComplexityScore", "60")));
+        c.setLatitude(Double.valueOf(BodyValues.text(body, "latitude", "0")));
+        c.setLongitude(Double.valueOf(BodyValues.text(body, "longitude", "0")));
         c = countryRepo.save(c);
         audit.log(null, "CREATE", "Country", String.valueOf(c.getId()), c.getNameEs());
         return c;
@@ -163,14 +165,14 @@ public class MarketRadarService {
 
     @Transactional
     public MarketStatistic addMarketStatistic(Map<String, Object> body) {
-        String iso2 = String.valueOf(body.get("iso2")).trim().toUpperCase();
+        String iso2 = BodyValues.requiredText(body, "iso2", "iso2").toUpperCase();
         Country country = countryRepo.findByIso2(iso2)
                 .orElseThrow(() -> new ApiException(404, "País no encontrado: " + iso2));
         MarketStatistic m = new MarketStatistic();
         m.setCountry(country);
-        m.setHsCode(String.valueOf(body.getOrDefault("hsCode", "090121")));
-        m.setStatisticalPeriod(String.valueOf(body.getOrDefault("statisticalPeriod", String.valueOf(LocalDate.now().getYear()))));
-        m.setSourceName(String.valueOf(body.getOrDefault("sourceName", "Registro Manual Usuario")));
+        m.setHsCode(BodyValues.text(body, "hsCode", "090121"));
+        m.setStatisticalPeriod(BodyValues.text(body, "statisticalPeriod", String.valueOf(LocalDate.now().getYear())));
+        m.setSourceName(BodyValues.text(body, "sourceName", "Registro Manual Usuario"));
         m.setConsultedAt(LocalDate.now());
         m.setImportVolumeTons(dec(body.get("importVolumeTons")));
         m.setImportValueUsd(dec(body.get("importValueUsd")));
@@ -178,14 +180,19 @@ public class MarketRadarService {
         m.setColombiaExportValueUsd(dec(body.get("colombiaExportValueUsd")));
         m.setUnitValueUsdKg(dec(body.get("unitValueUsdKg")));
         m.setYoyGrowthPct(dec(body.get("yoyGrowthPct")));
-        m.setTopSuppliers(String.valueOf(body.getOrDefault("topSuppliers", "No especificado")));
-        m.setTariffPct(dec(body.getOrDefault("tariffPct", country.getDefaultTariffPct())));
-        m.setRegulatorySummary(String.valueOf(body.getOrDefault("regulatorySummary", "Pendiente validación regulatoria")));
-        m.setAvgLogisticsCostUsdKg(dec(body.getOrDefault("avgLogisticsCostUsdKg", "1.80")));
-        m.setDistanceKm(Integer.valueOf(String.valueOf(body.getOrDefault("distanceKm", "5000"))));
-        m.setTargetSegments(String.valueOf(body.getOrDefault("targetSegments", "Importadores y distribuidores")));
+        m.setTopSuppliers(BodyValues.text(body, "topSuppliers", "No especificado"));
+        m.setTariffPct(dec(BodyValues.text(body, "tariffPct", String.valueOf(country.getDefaultTariffPct()))));
+        m.setRegulatorySummary(BodyValues.text(body, "regulatorySummary", "Pendiente validación regulatoria"));
+        m.setAvgLogisticsCostUsdKg(dec(BodyValues.text(body, "avgLogisticsCostUsdKg", "1.80")));
+        m.setDistanceKm(BodyValues.integer(body, "distanceKm", 5000));
+        m.setTargetSegments(BodyValues.text(body, "targetSegments", "Importadores y distribuidores"));
         m.setUpdateStatus("USER_UPLOADED");
-        m.setDataProvenance(DataProvenance.valueOf(String.valueOf(body.getOrDefault("dataProvenance", "USER_INPUT"))));
+        String provenance = BodyValues.text(body, "dataProvenance", "USER_INPUT");
+        try {
+            m.setDataProvenance(DataProvenance.valueOf(provenance));
+        } catch (IllegalArgumentException ex) {
+            throw new ApiException(400, "Proveniencia de datos no reconocida: " + provenance);
+        }
         return marketRepo.save(m);
     }
 

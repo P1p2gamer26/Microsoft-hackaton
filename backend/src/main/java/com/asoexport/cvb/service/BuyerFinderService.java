@@ -1,6 +1,7 @@
 package com.asoexport.cvb.service;
 
 import com.asoexport.cvb.common.ApiException;
+import com.asoexport.cvb.common.BodyValues;
 import com.asoexport.cvb.common.DataProvenance;
 import com.asoexport.cvb.common.TenantContext;
 import com.asoexport.cvb.domain.Buyer;
@@ -147,36 +148,39 @@ public class BuyerFinderService {
     @Transactional
     public Buyer createBuyer(Map<String, Object> body) {
         Long companyId = TenantContext.resolveCompanyId(null);
-        String iso2 = String.valueOf(body.getOrDefault("countryIso2", "US")).toUpperCase();
+        String iso2 = BodyValues.text(body, "countryIso2", "US").toUpperCase();
         Country country = countryRepo.findByIso2(iso2)
                 .orElseThrow(() -> new ApiException(404, "País no encontrado: " + iso2));
 
         Buyer b = new Buyer();
         b.setCompanyId(companyId); // Private to this company!
-        b.setCompanyName(String.valueOf(body.get("companyName")));
+        b.setCompanyName(BodyValues.requiredText(body, "companyName", "companyName"));
         b.setCountry(country);
-        b.setCityName(String.valueOf(body.getOrDefault("cityName", "")));
-        b.setCommercialAddress(String.valueOf(body.getOrDefault("commercialAddress", "")));
-        b.setWebsite(String.valueOf(body.getOrDefault("website", "")));
-        b.setBusinessActivity(String.valueOf(body.getOrDefault("businessActivity", "")));
-        b.setBuyerType(String.valueOf(body.getOrDefault("buyerType", "IMPORTER")));
-        b.setCommercialChannel(String.valueOf(body.getOrDefault("commercialChannel", "B2B")));
-        b.setPreferredCoffeeType(String.valueOf(body.getOrDefault("preferredCoffeeType", "SPECIALTY")));
-        b.setPreferredPresentation(String.valueOf(body.getOrDefault("preferredPresentation", "340g / 1kg")));
-        b.setInterestedInColombianCoffee(Boolean.parseBoolean(String.valueOf(body.getOrDefault("interestedInColombianCoffee", "true"))));
-        b.setSupportsPrivateLabel(Boolean.parseBoolean(String.valueOf(body.getOrDefault("supportsPrivateLabel", "false"))));
-        boolean verified = Boolean.parseBoolean(String.valueOf(body.getOrDefault("capacityVerified", "false")));
+        b.setCityName(BodyValues.text(body, "cityName", ""));
+        b.setCommercialAddress(BodyValues.text(body, "commercialAddress", ""));
+        b.setWebsite(BodyValues.text(body, "website", ""));
+        b.setBusinessActivity(BodyValues.text(body, "businessActivity", ""));
+        b.setBuyerType(BodyValues.text(body, "buyerType", "IMPORTER"));
+        b.setCommercialChannel(BodyValues.text(body, "commercialChannel", "B2B"));
+        b.setPreferredCoffeeType(BodyValues.text(body, "preferredCoffeeType", "SPECIALTY"));
+        b.setPreferredPresentation(BodyValues.text(body, "preferredPresentation", "340g / 1kg"));
+        b.setInterestedInColombianCoffee(Boolean.parseBoolean(BodyValues.text(body, "interestedInColombianCoffee", "true")));
+        b.setSupportsPrivateLabel(Boolean.parseBoolean(BodyValues.text(body, "supportsPrivateLabel", "false")));
+        boolean verified = Boolean.parseBoolean(BodyValues.text(body, "capacityVerified", "false"));
         b.setCapacityVerified(verified);
-        if (verified && body.get("verifiedPurchaseCapacityKgYear") != null && !String.valueOf(body.get("verifiedPurchaseCapacityKgYear")).isBlank()) {
-            b.setVerifiedPurchaseCapacityKgYear(new BigDecimal(String.valueOf(body.get("verifiedPurchaseCapacityKgYear"))));
+        String capacidad = BodyValues.text(body, "verifiedPurchaseCapacityKgYear", "");
+        if (verified && !capacidad.isEmpty()) {
+            b.setVerifiedPurchaseCapacityKgYear(new BigDecimal(capacidad));
         }
-        b.setPublicContactInfo(String.valueOf(body.getOrDefault("publicContactInfo", "")));
-        b.setSourceName(String.valueOf(body.getOrDefault("sourceName", "Registro directo usuario")));
+        b.setPublicContactInfo(BodyValues.text(body, "publicContactInfo", ""));
+        b.setSourceName(BodyValues.text(body, "sourceName", "Registro directo usuario"));
         b.setVerifiedAt(LocalDate.now());
-        b.setCommercialNotes(String.valueOf(body.getOrDefault("commercialNotes", "")));
-        b.setLatitude(body.get("latitude") != null ? Double.valueOf(String.valueOf(body.get("latitude"))) : country.getLatitude());
-        b.setLongitude(body.get("longitude") != null ? Double.valueOf(String.valueOf(body.get("longitude"))) : country.getLongitude());
-        b.setHypothetical(Boolean.parseBoolean(String.valueOf(body.getOrDefault("isHypothetical", "false"))));
+        b.setCommercialNotes(BodyValues.text(body, "commercialNotes", ""));
+        String lat = BodyValues.text(body, "latitude", "");
+        b.setLatitude(lat.isEmpty() ? country.getLatitude() : Double.valueOf(lat));
+        String lon = BodyValues.text(body, "longitude", "");
+        b.setLongitude(lon.isEmpty() ? country.getLongitude() : Double.valueOf(lon));
+        b.setHypothetical(Boolean.parseBoolean(BodyValues.text(body, "isHypothetical", "false")));
         b.setDataProvenance(DataProvenance.USER_INPUT);
         b.setCreatedBy(TenantContext.require().email());
         b = buyerRepo.save(b);
@@ -193,12 +197,11 @@ public class BuyerFinderService {
         BuyerInteraction bi = new BuyerInteraction();
         bi.setCompanyId(companyId);
         bi.setBuyerId(buyerId);
-        bi.setInteractionType(String.valueOf(body.getOrDefault("interactionType", "EMAIL")));
-        bi.setSummary(String.valueOf(body.get("summary")));
-        bi.setResponseReceived(Boolean.parseBoolean(String.valueOf(body.getOrDefault("responseReceived", "false"))));
-        if (body.get("responseHours") != null && !String.valueOf(body.get("responseHours")).isBlank()) {
-            bi.setResponseHours(new BigDecimal(String.valueOf(body.get("responseHours"))));
-        }
+        bi.setInteractionType(BodyValues.text(body, "interactionType", "EMAIL"));
+        bi.setSummary(BodyValues.requiredText(body, "summary", "summary"));
+        bi.setResponseReceived(Boolean.parseBoolean(BodyValues.text(body, "responseReceived", "false")));
+        String horas = BodyValues.text(body, "responseHours", "");
+        if (!horas.isEmpty()) bi.setResponseHours(new BigDecimal(horas));
         bi.setCreatedBy(TenantContext.require().email());
         return interactionRepo.save(bi);
     }
