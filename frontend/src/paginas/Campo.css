@@ -170,8 +170,8 @@
 .campo-titulo h2 { font-size: 22px; }
 
 .campo-volver {
-  width: 38px;
-  height: 38px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   border: 1px solid var(--borde);
   background: rgba(255, 255, 255, 0.05);
@@ -218,7 +218,7 @@
 
 .campo-boton-pequeno {
   align-self: flex-start;
-  min-height: 40px;
+  min-height: 44px;
   font-size: 13px;
 }
 
@@ -257,6 +257,14 @@
 
 .campo-campos span { color: var(--texto-suave); }
 .campo-campos b { text-align: right; }
+
+.campo-pregunta {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: #fbbf24;
+}
+
+.campo-aviso-simulado { color: #fbbf24; }
 
 .campo-seccion {
   margin: 4px 0 0;

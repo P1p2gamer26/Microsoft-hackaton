@@ -2,23 +2,31 @@
 import { etiquetaEstado, fincas, lotes } from '../datos'
 import type { Coord } from '../datos'
 import { encolar, extraerEntrega, haySenal, leerCola, sincronizar } from '../offline'
-import type { EntregaExtraida, RegistroOffline } from '../offline'
+import type { RegistroOffline } from '../offline'
 import './Campo.css'
 
 type Pantalla = 'inicio' | 'finca' | 'entrega' | 'lotes'
 type PuntoVisual = { x: number; y: number }
 type ResultadoVoz = { 0: { transcript: string }; isFinal: boolean }
 type EventoVoz = { results: ArrayLike<ResultadoVoz>; resultIndex: number }
+type EventoErrorVoz = { error: string }
+
+const preguntasFaltantes: Record<string, string> = {
+  cantidad: '¿Cuántas arrobas fueron?',
+  variedad: '¿Qué variedad es?',
+  humedad: '¿Qué humedad tiene?',
+}
 
 interface ReconocedorVoz {
   lang: string
   continuous: boolean
   interimResults: boolean
   onresult: ((evento: EventoVoz) => void) | null
-  onerror: (() => void) | null
+  onerror: ((evento: EventoErrorVoz) => void) | null
   onend: (() => void) | null
   start(): void
   stop(): void
+  abort(): void
 }
 
 type ConstructorVoz = new () => ReconocedorVoz
@@ -87,8 +95,8 @@ export default function Campo() {
   const [sincronizando, setSincronizando] = useState(false)
   const [marcando, setMarcando] = useState(false)
   const [puntos, setPuntos] = useState<Coord[]>([])
+  const [puntosSimulados, setPuntosSimulados] = useState<boolean[]>([])
   const [texto, setTexto] = useState('')
-  const [entrega, setEntrega] = useState<EntregaExtraida | null>(null)
   const [escuchando, setEscuchando] = useState(false)
   const [mensaje, setMensaje] = useState('')
   const reconocedorRef = useRef<ReconocedorVoz | null>(null)
@@ -98,6 +106,9 @@ export default function Campo() {
   const vozDisponible = constructorVoz() !== null
   const visual = useMemo(() => normalizarPuntos(puntos), [puntos])
   const area = useMemo(() => areaHectareas(puntos), [puntos])
+  const entrega = useMemo(() => texto.trim() ? extraerEntrega(texto) : null, [texto])
+  const haySimulados = puntosSimulados.includes(true)
+  const faltaCantidad = !entrega || (entrega.arrobas === null && entrega.kg === null)
   const lotesDeRosa = useMemo(() => lotes.filter(lote => lote.fincaIds.includes(fincas[0].id)), [])
 
   useEffect(() => {
@@ -129,11 +140,13 @@ export default function Campo() {
 
   useEffect(
     () => () => {
-      try {
-        reconocedorRef.current?.stop()
-      } catch {
-        return
-      }
+      const reconocedor = reconocedorRef.current
+      if (!reconocedor) return
+      reconocedor.onresult = null
+      reconocedor.onerror = null
+      reconocedor.onend = null
+      reconocedor.abort()
+      reconocedorRef.current = null
     },
     [],
   )
@@ -146,19 +159,22 @@ export default function Campo() {
   const agregarPunto = () => {
     if (!navigator.geolocation) {
       setPuntos(anteriores => [...anteriores, puntoSimulado(anteriores.length)])
+      setPuntosSimulados(anteriores => [...anteriores, true])
       setMensaje('Sin GPS: punto de ejemplo')
       return
     }
     navigator.geolocation.getCurrentPosition(
       posicion => {
         setPuntos(anteriores => [...anteriores, [posicion.coords.longitude, posicion.coords.latitude]])
+        setPuntosSimulados(anteriores => [...anteriores, false])
         setMensaje('Punto capturado')
       },
       () => {
         setPuntos(anteriores => [...anteriores, puntoSimulado(anteriores.length)])
+        setPuntosSimulados(anteriores => [...anteriores, true])
         setMensaje('Sin permiso GPS: punto de ejemplo')
       },
-      { enableHighAccuracy: true, timeout: 4000, maximumAge: 30000 },
+      { enableHighAccuracy: true, timeout: 4000, maximumAge: 0 },
     )
   }
 
@@ -168,13 +184,16 @@ export default function Campo() {
       return
     }
     const hectareas = Number(area.toFixed(2))
-    setCola(
-      encolar({
-        tipo: 'finca',
-        detalle: `${hectareas.toLocaleString('es-CO')} ha · ${puntos.length} puntos`,
-        datos: { hectareas, puntos: puntos.length },
-      }),
-    )
+    const guardado = encolar({
+      tipo: 'finca',
+      detalle: `${hectareas.toLocaleString('es-CO')} ha · ${puntos.length} puntos`,
+      datos: { hectareas, vertices: puntos, simulado: haySimulados },
+    })
+    setCola(guardado.cola)
+    if (!guardado.ok) {
+      setMensaje('No se pudo guardar en el celular (memoria llena)')
+      return
+    }
     setMarcando(false)
     setMensaje('Finca guardada en el celular')
   }
@@ -195,12 +214,15 @@ export default function Campo() {
         .join(' ')
         .trim()
       setTexto(transcrito)
-      setEntrega(extraerEntrega(transcrito))
       setMensaje('Dictado listo')
     }
-    reconocedor.onerror = () => {
+    reconocedor.onerror = evento => {
       setEscuchando(false)
-      setMensaje('No se pudo escuchar')
+      setMensaje(
+        evento.error === 'network'
+          ? 'Sin señal la voz no funciona: escribe la entrega o usa Usar ejemplo'
+          : 'No se pudo escuchar',
+      )
     }
     reconocedor.onend = () => setEscuchando(false)
     reconocedorRef.current = reconocedor
@@ -211,7 +233,6 @@ export default function Campo() {
   const usarEjemplo = () => {
     const ejemplo = 'Entregué 12 arrobas de castillo, secado al 11 por ciento'
     setTexto(ejemplo)
-    setEntrega(extraerEntrega(ejemplo))
     setMensaje('Ejemplo listo')
   }
 
@@ -220,20 +241,26 @@ export default function Campo() {
       setMensaje('Dicta o escribe la entrega')
       return
     }
-    const parsed = extraerEntrega(texto)
-    setEntrega(parsed)
-    setCola(
-      encolar({
-        tipo: 'entrega',
-        detalle: `${parsed.arrobas ?? '—'} arrobas · ${parsed.kg ?? '—'} kg · ${parsed.variedad ?? 'sin variedad'}`,
-        datos: {
-          arrobas: parsed.arrobas ?? 0,
-          kg: parsed.kg ?? 0,
-          variedad: parsed.variedad ?? 'Sin identificar',
-          humedad: parsed.humedad ?? 0,
-        },
-      }),
-    )
+    if (!entrega || faltaCantidad) {
+      setMensaje('Falta la cantidad')
+      return
+    }
+    const datos: Record<string, unknown> = { texto }
+    if (entrega.arrobas !== null) datos.arrobas = entrega.arrobas
+    if (entrega.kg !== null) datos.kg = entrega.kg
+    if (entrega.variedad !== null) datos.variedad = entrega.variedad
+    if (entrega.humedad !== null) datos.humedad = entrega.humedad
+
+    const guardado = encolar({
+      tipo: 'entrega',
+      detalle: `${entrega.arrobas ?? '—'} arrobas · ${entrega.kg ?? '—'} kg · ${entrega.variedad ?? 'sin variedad'}`,
+      datos,
+    })
+    setCola(guardado.cola)
+    if (!guardado.ok) {
+      setMensaje('No se pudo guardar en el celular (memoria llena)')
+      return
+    }
     setTexto('')
     setMensaje('Entrega guardada')
   }
@@ -258,7 +285,9 @@ export default function Campo() {
               className={`chip ${pendientes > 0 ? 'chip-revision' : 'chip-cumple'} ${sincronizando ? 'campo-latiendo' : ''}`}
               aria-live="polite"
             >
-              {sincronizando ? '↻ Enviando…' : `${pendientes} pendientes por enviar`}
+              {sincronizando
+                ? '↻ Enviando…'
+                : `${pendientes} ${pendientes === 1 ? 'pendiente' : 'pendientes'} por enviar`}
             </span>
           </div>
 
@@ -282,6 +311,7 @@ export default function Campo() {
                     className="campo-accion"
                     onClick={() => {
                       setPuntos([])
+                      setPuntosSimulados([])
                       setMarcando(false)
                       ir('finca')
                     }}
@@ -324,6 +354,9 @@ export default function Campo() {
                     <circle key={indice} cx={punto.x} cy={punto.y} r="4" fill="#f5ebe0" stroke="#c8875a" strokeWidth="2" />
                   ))}
                 </svg>
+                {haySimulados && (
+                  <p className="campo-mensaje campo-aviso-simulado" role="status">Puntos de ejemplo (sin GPS)</p>
+                )}
                 <div className="campo-medidas">
                   <div><span>Puntos</span><strong>{puntos.length}</strong></div>
                   <div>
@@ -341,6 +374,7 @@ export default function Campo() {
                     className="boton campo-boton-grande"
                     onClick={() => {
                       setPuntos([])
+                      setPuntosSimulados([])
                       setMarcando(true)
                       setMensaje('')
                     }}
@@ -370,7 +404,9 @@ export default function Campo() {
                   aria-label="Texto de la entrega"
                 />
                 <button className="boton-fantasma campo-boton-pequeno" onClick={usarEjemplo}>Usar ejemplo</button>
-                <button className="boton campo-boton-grande" onClick={registrarEntrega}>✓ Guardar entrega</button>
+                <button className="boton campo-boton-grande" onClick={registrarEntrega} disabled={faltaCantidad}>
+                  ✓ Guardar entrega
+                </button>
                 {entrega && (
                   <div className="vidrio campo-confirmacion">
                     <strong>✅ Confirmación</strong>
@@ -380,6 +416,11 @@ export default function Campo() {
                       <span>Variedad</span><b>{entrega.variedad ?? '—'}</b>
                       <span>Humedad</span><b>{entrega.humedad === null ? '—' : `${entrega.humedad} %`}</b>
                     </div>
+                    {entrega.faltantes.map(campo => (
+                      <p className="campo-pregunta" key={campo}>
+                        {preguntasFaltantes[campo] ?? `¿Cuál es ${campo}?`}
+                      </p>
+                    ))}
                   </div>
                 )}
                 {mensaje && <p className="campo-mensaje">{mensaje}</p>}
@@ -431,10 +472,18 @@ export default function Campo() {
           </div>
 
           <nav className="campo-barra" aria-label="Navegación del celular">
-            <button className={pantalla === 'inicio' ? 'activo' : ''} onClick={() => ir('inicio')}>
+            <button
+              className={pantalla === 'inicio' ? 'activo' : ''}
+              aria-current={pantalla === 'inicio' ? 'page' : undefined}
+              onClick={() => ir('inicio')}
+            >
               <span aria-hidden="true">🏠</span><span>Inicio</span>
             </button>
-            <button className={pantalla === 'lotes' ? 'activo' : ''} onClick={() => ir('lotes')}>
+            <button
+              className={pantalla === 'lotes' ? 'activo' : ''}
+              aria-current={pantalla === 'lotes' ? 'page' : undefined}
+              onClick={() => ir('lotes')}
+            >
               <span aria-hidden="true">📦</span><span>Lotes</span>
             </button>
           </nav>
