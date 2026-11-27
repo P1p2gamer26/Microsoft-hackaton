@@ -59,7 +59,7 @@ const ia = [
 const campo = [
   { icono: '📴', titulo: 'Offline primero', texto: 'Registrar sin internet y sincronizar cuando haya conexión.' },
   { icono: '📲', titulo: 'WhatsApp / USSD', texto: 'Canales que la finca ya usa, sin instalar otra experiencia.' },
-  { icono: '🔊', titulo: 'Pictogramas y voz', texto: 'Pocos textos, íconos claros e entrada por voz para baja adopción digital.' },
+  { icono: '🔊', titulo: 'Pictogramas y voz', texto: 'Pocos textos, íconos claros y entrada por voz para baja adopción digital.' },
   { icono: '📶', titulo: 'Wi-Fi en acopio', texto: 'Punto de sincronización y validación con recursos compartidos.' },
 ]
 

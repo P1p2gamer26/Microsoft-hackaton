@@ -356,15 +356,17 @@
     top: 12px;
     right: 12px;
     left: 12px;
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: flex-end;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: auto;
     max-width: none;
     padding: 7px;
   }
 
   .controles-mapa button {
-    padding: 7px 10px;
+    padding: 8px 6px;
     font-size: 11px;
+    white-space: normal;
+    min-height: 40px;
   }
 }

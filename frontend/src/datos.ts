@@ -120,28 +120,28 @@ export const lotes: Lote[] = [
     id: 'LT-2026-0412', fincaIds: ['F-HU-001', 'F-HU-002'], kg: 1250, humedad: 11.2, puntaje: 84.5,
     destino: 'Hamburgo, Alemania', comprador: 'Anke Vogel · Nordkaffee Rösterei', estado: 'cumple',
     eventos: [
-      ev('cosecha', '2026-10-02T07:30:00', { nombre: 'Finca La Esperanza', coord: centro(finca('F-HU-001')) }, '38 arrobas de cereza, recolección selectiva', 'Rosa Elvira Cuéllar', 'voz'),
-      ev('beneficio', '2026-10-03T16:00:00', { nombre: 'Finca La Esperanza', coord: centro(finca('F-HU-001')) }, 'Fermentación 20 h, secado en marquesina hasta 11,2 %', 'Rosa Elvira Cuéllar', 'app-offline'),
-      ev('acopio', '2026-10-09T10:15:00', lugares.acopioPitalito, 'Pesaje 1.250 kg pergamino, muestra de taza 84,5', 'Cooperativa Cadefihuila', 'web'),
-      ev('trilla', '2026-10-14T08:00:00', lugares.trillaNeiva, 'Trilla y selección: excelso EP, 69 kg × 15 sacos', 'Trilladora Neiva', 'web'),
-      ev('transporte', '2026-10-16T05:00:00', { nombre: 'Vía Neiva–Buenaventura', coord: [-75.6812, 4.5339] }, 'Contenedor 20 pies sellado, guía RNDC 88213', 'Transportes del Sur', 'whatsapp'),
-      ev('puerto', '2026-10-18T13:40:00', { nombre: 'Puerto de Buenaventura', coord: puertos[0].coord }, 'Inspección ICA, DEX en VUCE, declaración EUDR enviada', 'Laura Restrepo', 'web'),
+      ev('cosecha', '2026-10-02T07:30:00-05:00', { nombre: 'Finca La Esperanza', coord: centro(finca('F-HU-001')) }, '38 arrobas de cereza, recolección selectiva', 'Rosa Elvira Cuéllar', 'voz'),
+      ev('beneficio', '2026-10-03T16:00:00-05:00', { nombre: 'Finca La Esperanza', coord: centro(finca('F-HU-001')) }, 'Fermentación 20 h, secado en marquesina hasta 11,2 %', 'Rosa Elvira Cuéllar', 'app-offline'),
+      ev('acopio', '2026-10-09T10:15:00-05:00', lugares.acopioPitalito, 'Pesaje 1.250 kg pergamino, muestra de taza 84,5', 'Cooperativa Cadefihuila', 'web'),
+      ev('trilla', '2026-10-14T08:00:00-05:00', lugares.trillaNeiva, 'Trilla y selección: excelso EP, 69 kg × 15 sacos', 'Trilladora Neiva', 'web'),
+      ev('transporte', '2026-10-16T05:00:00-05:00', { nombre: 'Vía Neiva–Buenaventura', coord: [-75.6812, 4.5339] }, 'Contenedor 20 pies sellado, guía RNDC 88213', 'Transportes del Sur', 'whatsapp'),
+      ev('puerto', '2026-10-18T13:40:00-05:00', { nombre: 'Puerto de Buenaventura', coord: puertos[0].coord }, 'Inspección ICA, DEX en VUCE, declaración EUDR enviada', 'Laura Restrepo', 'web'),
     ],
   },
   {
     id: 'LT-2026-0419', fincaIds: ['F-HU-003', 'F-HU-004'], kg: 980, humedad: 12.4, puntaje: 82,
     destino: 'Amberes, Bélgica', comprador: 'Pendiente', estado: 'riesgo',
     eventos: [
-      ev('cosecha', '2026-10-05T07:00:00', { nombre: 'Finca Los Naranjos', coord: centro(finca('F-HU-004')) }, '30 arrobas de cereza', 'Edilberto Perdomo', 'whatsapp'),
-      ev('acopio', '2026-10-11T11:00:00', lugares.acopioPitalito, 'Pesaje 980 kg; humedad 12,4 % (límite)', 'Cooperativa Cadefihuila', 'web'),
+      ev('cosecha', '2026-10-05T07:00:00-05:00', { nombre: 'Finca Los Naranjos', coord: centro(finca('F-HU-004')) }, '30 arrobas de cereza', 'Edilberto Perdomo', 'whatsapp'),
+      ev('acopio', '2026-10-11T11:00:00-05:00', lugares.acopioPitalito, 'Pesaje 980 kg; humedad 12,4 % (límite)', 'Cooperativa Cadefihuila', 'web'),
     ],
   },
   {
     id: 'LT-2026-0423', fincaIds: ['F-CA-001', 'F-CA-002'], kg: 640, humedad: 10.8, puntaje: 86,
     destino: 'Nueva York, EE. UU.', comprador: 'Blue Hill Roasters', estado: 'revision',
     eventos: [
-      ev('cosecha', '2026-10-07T06:45:00', { nombre: 'Finca La Cumbre', coord: centro(finca('F-CA-001')) }, '22 arrobas, café de origen Cauca', 'Hernán Muñoz', 'app-offline'),
-      ev('acopio', '2026-10-12T09:30:00', lugares.acopioPopayan, 'Registro sin señal; sincronizado 2 h después', 'Hernán Muñoz', 'app-offline'),
+      ev('cosecha', '2026-10-07T06:45:00-05:00', { nombre: 'Finca La Cumbre', coord: centro(finca('F-CA-001')) }, '22 arrobas, café de origen Cauca', 'Hernán Muñoz', 'app-offline'),
+      ev('acopio', '2026-10-12T09:30:00-05:00', lugares.acopioPopayan, 'Registro sin señal; sincronizado 2 h después', 'Hernán Muñoz', 'app-offline'),
     ],
   },
 ]
