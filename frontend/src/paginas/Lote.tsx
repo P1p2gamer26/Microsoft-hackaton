@@ -62,6 +62,7 @@ export default function Lote() {
   })
   const verificado = lote.estado === 'cumple' && origen.length > 0 && origen.every(finca => finca.estado === 'cumple')
   const eventos = [...lote.eventos].sort((a, b) => a.fecha.localeCompare(b.fecha))
+  const etapasRegistradas = new Set(eventos.map(evento => evento.etapa)).size
   const hitos: Hito[] = recorrido.flatMap((paso): Hito[] => {
     const delPaso = eventos.filter(evento => evento.etapa === paso.etapa)
     return delPaso.length
@@ -106,7 +107,7 @@ export default function Lote() {
               <h2 id="historial-titulo">Historial del lote</h2>
               <p className="lote-suave">Cada registro queda sellado con fecha, lugar y origen del dato.</p>
             </div>
-            <span className="chip">{eventos.length} de {recorrido.length} etapas</span>
+            <span className="chip">{etapasRegistradas} de {recorrido.length} etapas</span>
           </div>
           <ol className="lote-linea">
             {hitos.map((hito, indice) => (

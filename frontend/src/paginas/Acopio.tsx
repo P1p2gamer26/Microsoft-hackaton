@@ -1,7 +1,7 @@
-﻿import { useEffect, useMemo, useState } from 'react'
+﻿import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { etiquetaEstado, fincas, lotes } from '../datos'
-import type { Coord, EstadoEudr, Lote } from '../datos'
+import { etiquetaEstado, fincas, lugares, lotes } from '../datos'
+import type { EstadoEudr, Lote } from '../datos'
 import { encolar, haySenal, leerCola, sincronizar } from '../offline'
 import type { RegistroOffline } from '../offline'
 import './Acopio.css'
@@ -97,12 +97,22 @@ export default function Acopio() {
   const [error, setError] = useState('')
   const [enLinea, setEnLinea] = useState(haySenal)
   const [cola, setCola] = useState<RegistroOffline[]>(() => leerCola())
+  const [creando, setCreando] = useState(false)
+  const temporizadorRef = useRef<number | null>(null)
 
   const kgNumero = numero(kg)
   const humedadNumero = numero(humedad)
   const puntajeNumero = numero(puntaje)
-  const humedadFuera = !Number.isFinite(humedadNumero) || humedadNumero < 10 || humedadNumero > 12.5
+  const humedadFuera = humedad.trim() !== ''
+    && Number.isFinite(humedadNumero)
+    && humedadNumero >= 5
+    && humedadNumero <= 20
+    && (humedadNumero < 10 || humedadNumero > 12.5)
   const pendientes = cola.filter(registro => !registro.sincronizado).length
+
+  useEffect(() => () => {
+    if (temporizadorRef.current !== null) window.clearTimeout(temporizadorRef.current)
+  }, [])
 
   useEffect(() => {
     const actualizar = () => setEnLinea(haySenal())
@@ -132,26 +142,38 @@ export default function Acopio() {
   }
 
   const crearLote = () => {
+    if (creando) return
     if (seleccion.length === 0) {
       setError('Selecciona al menos una finca')
+      return
+    }
+    if (kg.trim() === '') {
+      setError('Ingresa el peso en kg')
       return
     }
     if (!Number.isFinite(kgNumero) || kgNumero <= 0) {
       setError('Ingresa un peso en kg válido')
       return
     }
-    if (!Number.isFinite(humedadNumero)) {
-      setError('Ingresa una humedad válida')
+    if (humedad.trim() === '') {
+      setError('Ingresa la humedad')
       return
     }
-    if (!Number.isFinite(puntajeNumero)) {
-      setError('Ingresa un puntaje de taza válido')
+    if (!Number.isFinite(humedadNumero) || humedadNumero < 5 || humedadNumero > 20) {
+      setError('La humedad debe estar entre 5 y 20 %')
+      return
+    }
+    if (puntaje.trim() === '') {
+      setError('Ingresa el puntaje de taza')
+      return
+    }
+    if (!Number.isFinite(puntajeNumero) || puntajeNumero < 0 || puntajeNumero > 100) {
+      setError('El puntaje de taza debe estar entre 0 y 100')
       return
     }
     setError('')
 
     const id = generarId(lotesHoy)
-    const coordenada: Coord = fincas.find(finca => finca.id === seleccion[0])?.poligono[0] ?? [-76.6066, 2.4448]
     const nuevo: Lote = {
       id,
       fincaIds: seleccion,
@@ -165,8 +187,8 @@ export default function Acopio() {
         {
           etapa: 'acopio',
           fecha: new Date().toISOString(),
-          lugar: 'Centro de acopio Popayán',
-          coord: coordenada,
+          lugar: lugares.acopioPopayan.nombre,
+          coord: lugares.acopioPopayan.coord,
           detalle: `Pesaje ${kgNumero} kg; humedad ${humedadNumero} %; puntaje ${puntajeNumero}`,
           registradoPor: 'Hernán Muñoz',
           canal: enLinea ? 'web' : 'app-offline',
@@ -175,6 +197,13 @@ export default function Acopio() {
     }
     setLotesHoy(anteriores => [nuevo, ...anteriores])
     setCreado(nuevo)
+    setKg('')
+    setCreando(true)
+    if (temporizadorRef.current !== null) window.clearTimeout(temporizadorRef.current)
+    temporizadorRef.current = window.setTimeout(() => {
+      setCreando(false)
+      temporizadorRef.current = null
+    }, 1500)
     setCola(
       encolar({
         tipo: 'lote',
@@ -235,6 +264,8 @@ export default function Acopio() {
               <span>Humedad (%)</span>
               <input
                 type="number"
+                min="5"
+                max="20"
                 step="0.1"
                 value={humedad}
                 aria-invalid={humedadFuera}
@@ -251,8 +282,8 @@ export default function Acopio() {
               <span>Puntaje de taza</span>
               <input
                 type="number"
-                min="80"
-                max="90"
+                min="0"
+                max="100"
                 step="0.5"
                 value={puntaje}
                 onChange={evento => setPuntaje(evento.target.value)}
@@ -261,7 +292,7 @@ export default function Acopio() {
           </div>
 
           {error && <p className="acopio-error" role="alert">{error}</p>}
-          <button className="boton acopio-crear" onClick={crearLote}>Crear lote</button>
+          <button className="boton acopio-crear" onClick={crearLote} disabled={creando}>Crear lote</button>
         </div>
 
         <aside className="acopio-lateral">
@@ -274,7 +305,15 @@ export default function Acopio() {
                 <span className={`chip chip-${creado.estado}`}>
                   {creado.estado === 'riesgo' ? '⚠ Finca con alerta: no exportable a la UE' : `✓ Guardado · ${etiquetaEstado[creado.estado]}`}
                 </span>
-                <small className="acopio-qr-pie">QR simulado generado desde el id del lote</small>
+                <dl className="acopio-resumen">
+                  <div><dt>Fincas</dt><dd>{creado.fincaIds.length}</dd></div>
+                  <div><dt>Kg</dt><dd>{creado.kg.toLocaleString('es-CO')}</dd></div>
+                  <div><dt>Humedad</dt><dd>{creado.humedad.toLocaleString('es-CO')} %</dd></div>
+                  <div><dt>Taza</dt><dd>{creado.puntaje.toLocaleString('es-CO')} pts</dd></div>
+                </dl>
+                <small className="acopio-qr-pie">
+                  QR simulado: el pasaporte del lote nuevo aparecerá al sincronizar.
+                </small>
               </>
             ) : (
               <div className="acopio-qr-vacio">
@@ -282,9 +321,8 @@ export default function Acopio() {
                 <p>El código QR aparece al crear el lote.</p>
               </div>
             )}
-            <Link className="acopio-enlace" to="/lote/LT-2026-0412">
-              Ver pasaporte de ejemplo: /lote/LT-2026-0412 →
-            </Link>
+            <Link className="acopio-enlace" to="/lote/LT-2026-0412">Ver pasaporte de ejemplo</Link>
+            <small className="acopio-qr-pie">Ejemplo: /lote/LT-2026-0412</small>
           </div>
 
           <div className="vidrio acopio-lotes">

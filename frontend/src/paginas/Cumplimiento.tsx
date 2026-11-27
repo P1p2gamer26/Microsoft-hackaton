@@ -1,63 +1,97 @@
-﻿import { useEffect, useState } from 'react'
+﻿import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { colorEstado, etiquetaEstado, fincas, lotes, type EstadoEudr, type Etapa } from '../datos'
+import { colorEstado, etiquetaEstado, fincas, lotes, type EstadoEudr, type Etapa, type Lote } from '../datos'
 import './Cumplimiento.css'
 
 const estados: EstadoEudr[] = ['cumple', 'revision', 'riesgo']
 
 const bizStep: Record<Etapa, string> = {
-  cosecha: 'producing',
-  beneficio: 'processing',
-  acopio: 'aggregating',
-  trilla: 'processing',
+  cosecha: 'commissioning',
+  beneficio: 'commissioning',
+  acopio: 'receiving',
+  trilla: 'transforming',
   transporte: 'shipping',
-  puerto: 'inspecting',
+  puerto: 'departing',
 }
 
 const nf = new Intl.NumberFormat('es-CO')
 
+function conZonaHoraria(fecha: string): boolean {
+  return /([zZ]|[+-]\d{2}:\d{2})$/.test(fecha)
+}
+
+function motivoRetencion(lote: Lote): string {
+  const origen = lote.fincaIds.flatMap(id => fincas.filter(finca => finca.id === id))
+  const motivos: string[] = []
+  const alertadas = origen.filter(finca => finca.alerta)
+  if (alertadas.length) {
+    motivos.push(`alerta GLAD/GFW en ${alertadas.map(finca => finca.nombre).join(', ')}: ${alertadas.map(finca => finca.alerta).join('; ')}`)
+  }
+  const revisiones = origen.filter(finca => finca.estado === 'revision')
+  if (revisiones.length) {
+    motivos.push(`finca(s) en revisión: ${revisiones.map(finca => finca.nombre).join(', ')}`)
+  }
+  if (lote.humedad < 10 || lote.humedad > 12.5) {
+    motivos.push(`humedad ${lote.humedad.toLocaleString('es-CO')} % fuera de 10–12,5 %`)
+  }
+  return motivos.length ? motivos.join('; ') : `clasificación ${etiquetaEstado[lote.estado]} pendiente de verificación`
+}
+
 function construirEpcis() {
   return {
-    '@context': 'https://ref.gs1.org/standards/epcis/2.0/epcis-context.jsonld',
+    '@context': [
+      'https://ref.gs1.org/standards/epcis/2.0/epcis-context.jsonld',
+      { cafe: 'https://cafetrace.example/epcis/' },
+    ],
     type: 'EPCISDocument',
     schemaVersion: '2.0',
     creationDate: new Date().toISOString(),
-    eventList: lotes.flatMap(lote =>
-      lote.eventos.map(evento => ({
-        type: 'ObjectEvent',
-        eventTime: evento.fecha,
-        eventTimeZoneOffset: '-05:00',
-        action: 'OBSERVE',
-        bizStep: `urn:epcglobal:cbv:bizstep:${bizStep[evento.etapa]}`,
-        readPoint: { id: `geo:${evento.coord[0]},${evento.coord[1]}` },
-        epcList: [lote.id],
-        extension: {
-          etapa: evento.etapa,
-          lugar: evento.lugar,
-          registradoPor: evento.registradoPor,
-          canal: evento.canal,
-          destino: lote.destino,
-          comprador: lote.comprador,
-        },
-      })),
-    ),
+    epcisBody: {
+      eventList: lotes.flatMap(lote =>
+        lote.eventos.map(evento => ({
+          type: 'ObjectEvent',
+          eventTime: conZonaHoraria(evento.fecha) ? evento.fecha : `${evento.fecha}-05:00`,
+          eventTimeZoneOffset: '-05:00',
+          action: 'OBSERVE',
+          bizStep: `urn:epcglobal:cbv:bizstep:${bizStep[evento.etapa]}`,
+          readPoint: { id: `geo:${evento.coord[1]},${evento.coord[0]}` },
+          quantityList: [{
+            epcClass: `urn:epc:class:lgtin:7709998.000001.${lote.id}`,
+            quantity: lote.kg,
+            uom: 'KGM',
+          }],
+          'cafe:etapa': evento.etapa,
+          'cafe:lugar': evento.lugar,
+          'cafe:canal': evento.canal,
+          'cafe:destino': lote.destino,
+        })),
+      ),
+    },
   }
 }
 
 function construirDeclaracion(conPoligono: number, alertas: number) {
   const origen = fincas.map(f => `${f.nombre} (${f.id}, ${f.municipio})`)
-  const lotesTexto = lotes.map(l => `${l.id}: ${nf.format(l.kg)} kg, ${l.fincaIds.length} finca(s), ${l.destino}, ${etiquetaEstado[l.estado]}`)
+  const incluidos = lotes.filter(lote => lote.estado === 'cumple')
+  const retenidos = lotes.filter(lote => lote.estado !== 'cumple')
+  const lineaLote = (lote: Lote) => `${lote.id}: ${nf.format(lote.kg)} kg, ${lote.fincaIds.length} finca(s), ${lote.destino}`
   const riesgo = alertas === 0
     ? 'Sin alertas de deforestación activas sobre los polígonos declarados.'
     : `${alertas} alerta(s) GLAD/GFW activa(s); los lotes implicados no se declaran como libres de deforestación hasta su verificación.`
 
   return [
     'DECLARACIÓN DE DEBIDA DILIGENCIA · EUDR',
-    'Reglamento (UE) 2023/1115 · Café verde · Exportadora en Bogotá',
+    'Reglamento (UE) 2023/1115 · Exportadora en Bogotá',
+    'Producto: café verde, partida arancelaria HS 0901',
+    'País de producción: Colombia',
+    'Fecha de corte de deforestación: 31-dic-2020',
     `Fecha de emisión: ${new Intl.DateTimeFormat('es-CO', { dateStyle: 'long' }).format(new Date())}`,
     '',
-    `Lotes incluidos (${lotes.length}):`,
-    ...lotesTexto.map(linea => `  - ${linea}`),
+    `Lotes incluidos (${incluidos.length}):`,
+    ...incluidos.map(lote => `  - ${lineaLote(lote)}`),
+    '',
+    `Lotes retenidos (${retenidos.length}):`,
+    ...retenidos.map(lote => `  - ${lineaLote(lote)} · Motivo: ${motivoRetencion(lote)}`),
     '',
     `Fincas de origen (${fincas.length}):`,
     ...origen.map(linea => `  - ${linea}`),
@@ -73,8 +107,11 @@ function construirDeclaracion(conPoligono: number, alertas: number) {
 export default function Cumplimiento() {
   const navigate = useNavigate()
   const [modalAbierto, setModalAbierto] = useState(false)
+  const dialogRef = useRef<HTMLDialogElement>(null)
+  const botonDeclaracionRef = useRef<HTMLButtonElement>(null)
 
   const conPoligono = fincas.filter(f => f.poligono.length >= 4).length
+  const fincasCumplen = fincas.filter(f => f.estado === 'cumple').length
   const lotesCumplen = lotes.filter(l => l.estado === 'cumple')
   const porcentajeCumple = lotes.length ? Math.round((lotesCumplen.length / lotes.length) * 100) : 0
   const alertas = fincas.filter(f => f.alerta)
@@ -82,13 +119,14 @@ export default function Cumplimiento() {
   const declaracion = construirDeclaracion(conPoligono, alertas.length)
 
   useEffect(() => {
-    if (!modalAbierto) return
-    const manejarTecla = (evento: KeyboardEvent) => {
-      if (evento.key === 'Escape') setModalAbierto(false)
-    }
-    window.addEventListener('keydown', manejarTecla)
-    return () => window.removeEventListener('keydown', manejarTecla)
+    if (modalAbierto && !dialogRef.current?.open) dialogRef.current?.showModal()
   }, [modalAbierto])
+
+  const cerrarModal = () => dialogRef.current?.close()
+  const alCerrarModal = () => {
+    setModalAbierto(false)
+    botonDeclaracionRef.current?.focus()
+  }
 
   const exportarEpcis = () => {
     const documento = construirEpcis()
@@ -114,7 +152,12 @@ export default function Cumplimiento() {
           </p>
         </div>
         <div className="cumpl-acciones">
-          <button className="boton-fantasma" type="button" onClick={() => setModalAbierto(true)}>
+          <button
+            className="boton-fantasma"
+            type="button"
+            ref={botonDeclaracionRef}
+            onClick={() => setModalAbierto(true)}
+          >
             Generar declaración de debida diligencia
           </button>
           <button className="boton" type="button" onClick={exportarEpcis}>
@@ -135,6 +178,7 @@ export default function Cumplimiento() {
           <p className="cumpl-kpi-valor">{porcentajeCumple} %</p>
           <h2>Lotes que cumplen EUDR</h2>
           <p className="cumpl-kpi-nota">{lotesCumplen.length} de {lotes.length} lotes evaluados</p>
+          <p className="cumpl-kpi-nota">Fincas que cumplen: {fincasCumplen} de {fincas.length}</p>
         </article>
         <article className="vidrio cumpl-kpi">
           <span className="cumpl-kpi-icono cumpl-icono-alerta" aria-hidden>!</span>
@@ -264,30 +308,28 @@ export default function Cumplimiento() {
         )}
       </section>
 
-      {modalAbierto && (
-        <div className="cumpl-modal-fondo" onClick={() => setModalAbierto(false)}>
-          <div
-            className="vidrio cumpl-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="declaracion-titulo"
-            onClick={evento => evento.stopPropagation()}
-          >
-            <div className="cumpl-modal-cabecera">
-              <div>
-                <p className="cumpl-ojeada">Borrador · simulación</p>
-                <h2 id="declaracion-titulo">Declaración de debida diligencia</h2>
-              </div>
-              <button className="boton-fantasma" type="button" aria-label="Cerrar" onClick={() => setModalAbierto(false)}>✕</button>
-            </div>
-            <pre className="cumpl-declaracion">{declaracion}</pre>
-            <p className="cumpl-nota-ia">Borrador redactado por Azure OpenAI (simulado); requiere revisión humana.</p>
-            <div className="cumpl-modal-pie">
-              <button className="boton" type="button" onClick={() => setModalAbierto(false)}>Entendido</button>
-            </div>
+      <dialog
+        ref={dialogRef}
+        className="vidrio cumpl-modal"
+        aria-labelledby="declaracion-titulo"
+        onClose={alCerrarModal}
+        onClick={evento => {
+          if (evento.target === evento.currentTarget) cerrarModal()
+        }}
+      >
+        <div className="cumpl-modal-cabecera">
+          <div>
+            <p className="cumpl-ojeada">Borrador · simulación</p>
+            <h2 id="declaracion-titulo">Declaración de debida diligencia</h2>
           </div>
+          <button className="boton-fantasma" type="button" aria-label="Cerrar" onClick={cerrarModal}>✕</button>
         </div>
-      )}
+        <pre className="cumpl-declaracion">{declaracion}</pre>
+        <p className="cumpl-nota-ia">Borrador redactado por Azure OpenAI (simulado); requiere revisión humana.</p>
+        <div className="cumpl-modal-pie">
+          <button className="boton" type="button" onClick={cerrarModal}>Entendido</button>
+        </div>
+      </dialog>
     </section>
   )
 }

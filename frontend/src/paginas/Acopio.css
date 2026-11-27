@@ -124,6 +124,7 @@
 .acopio-aviso { align-self: flex-start; font-size: 10px; }
 .acopio-error { margin: 14px 0 0; color: var(--rojo); font-size: 13px; }
 .acopio-crear { margin-top: 20px; min-width: 180px; min-height: 46px; font-size: 15px; }
+.acopio-crear:disabled { opacity: 0.55; cursor: not-allowed; }
 
 .acopio-lateral {
   display: grid;
@@ -150,7 +151,18 @@
 
 .acopio-qr { width: 100%; height: 100%; display: block; }
 .acopio-id { font-family: 'Space Grotesk', sans-serif; font-size: 22px; letter-spacing: 0.04em; }
-.acopio-qr-pie { font-size: 11px; color: var(--texto-suave); }
+.acopio-qr-pie { font-size: 11px; line-height: 1.5; color: var(--texto-suave); }
+
+.acopio-resumen {
+  width: 100%;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.acopio-resumen div { padding: 9px 10px; border: 1px solid var(--borde); border-radius: 10px; background: rgba(255, 255, 255, 0.03); }
+.acopio-resumen dt { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--texto-suave); }
+.acopio-resumen dd { margin: 4px 0 0; font-family: 'Space Grotesk', sans-serif; font-size: 14px; font-weight: 600; }
 
 .acopio-qr-vacio {
   width: 100%;
