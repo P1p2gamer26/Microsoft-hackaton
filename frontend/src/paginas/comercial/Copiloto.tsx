@@ -67,6 +67,10 @@ interface Analisis {
   pendingValidationItems: string[]
   dataProvenance: Procedencia
   legalDisclaimer: string
+  // Capa opcional de Ollama (Qwen3) en el backend
+  engine?: string
+  copilotAnswer?: string
+  llm?: { configured: boolean; used: boolean; model: string }
 }
 
 interface DocumentoExportacion {
@@ -163,10 +167,11 @@ function urlOficial(valor: string): string | null {
 }
 
 function consultar(consulta: Consulta): Promise<Analisis> {
+  // El backend degradea a motor experto en 8 s si el LLM local se cuelga; 30 s es margen suficiente.
   return pedir<Analisis>('/copilot/analyze', {
     method: 'POST',
     body: JSON.stringify(consulta),
-  })
+  }, 30000)
 }
 
 function comoError(error: unknown): Error {
@@ -348,6 +353,21 @@ export default function Copiloto() {
               </div>
               <p className="com-nota">{analisis.operationSummary.hsVerificationNote}</p>
             </div>
+
+            {analisis.copilotAnswer && (
+              <div className="vidrio com-bloque copiloto-ia">
+                <div className="copiloto-titulo-seccion">
+                  <h2>Respuesta de Ollama · Qwen3</h2>
+                  <span className="chip chip-ia">
+                    {analisis.llm?.used ? `IA local · ${analisis.llm.model}` : 'Motor experto'}
+                  </span>
+                </div>
+                <p className="com-nota">
+                  Generada por el modelo local anclada a los datos y fuentes del motor experto; no sustituye asesoría legal/aduanera.
+                </p>
+                <div className="copiloto-respuesta-ia">{analisis.copilotAnswer}</div>
+              </div>
+            )}
 
             <div className="com-rejilla">
               <div className="vidrio com-bloque">

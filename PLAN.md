@@ -27,9 +27,9 @@
 
 1. Descargar instalador Windows desde `https://ollama.com/download` y ejecutarlo.
 2. Verificar: `ollama --version` y `Invoke-RestMethod http://127.0.0.1:11434/api/tags`.
-3. Descargar modelo recomendado para CPU: `ollama pull qwen2.5:3b-instruct` (~2 GB).
+3. Descargar modelo recomendado para CPU: `ollama pull qwen3` (~2 GB).
    - Alternativa: `llama3.2:3b` (similar) o `llama3.1:8b` (~4.7 GB, más calidad pero más lento).
-4. Prueba rápida: `ollama run qwen2.5:3b-instruct "Explica en una frase Coffee Value Bridge"`.
+4. Prueba rápida: `ollama run qwen3 "Explica en una frase Coffee Value Bridge"`.
 5. Si el puerto 11434 está ocupado o el servicio no arranca, revisar el tray icon de Ollama y reiniciar.
 
 ## 3. Construir el agente local
@@ -102,7 +102,7 @@ Criterio de éxito: respuestas en español, basadas en los archivos del repo, co
 ## 9. Decisiones confirmadas por el usuario
 
 1. Repo de GitHub: **se mantiene público**.
-2. Modelo: **qwen2.5:3b-instruct** en CPU (rápido).
+2. Modelo: **qwen3** en CPU (rápido).
 3. Alcance: **responder con citas y ejecutar cálculos/simulaciones** simples.
 4. Interfaz: **panel integrado en `coffee-value-bridge.html`** (vista "Coffee Intelligence Copilot"), conservando el motor de reglas como respaldo.
 
@@ -112,7 +112,7 @@ Criterio de éxito: respuestas en español, basadas en los archivos del repo, co
 - [x] Backend del agente, índice de documentos, herramientas, prompt y script de arranque.
 - [x] Integración del copiloto web con modo IA local / reglas DEMO.
 - [x] Verificación de sintaxis Python y JavaScript; endpoints `/api/health` y `/api/sources` responden.
-- [x] Instalación de Ollama y descarga de `qwen2.5:3b-instruct` (1.9 GB).
+- [x] Instalación de Ollama y descarga de `qwen3` (1.9 GB).
 - [x] Integración del código nuevo de `origin/main` y `origin/julian/frontend-3d`.
 - [x] Cambio de destino de deploy: GitHub Pages descartado (requiere backend) → **Render**.
 - [x] `render.yaml` con frontend estático, backend Spring Boot por Docker, agente Python por Docker y Postgres/PostGIS gratis.

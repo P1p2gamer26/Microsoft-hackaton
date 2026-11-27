@@ -1,6 +1,7 @@
 package com.asoexport.cvb.service;
 
 import com.asoexport.cvb.common.ApiException;
+import com.asoexport.cvb.common.BodyValues;
 import com.asoexport.cvb.common.DataProvenance;
 import com.asoexport.cvb.common.TenantContext;
 import com.asoexport.cvb.domain.Country;
@@ -41,7 +42,10 @@ public class ExportCopilotService {
 
     public Map<String, Object> analyzeExportQuery(Map<String, Object> body) {
         Long companyId = TenantContext.resolveCompanyId(null);
-        String prompt = String.valueOf(body.getOrDefault("prompt", ""));
+        String prompt = BodyValues.text(body, "prompt", "");
+        if (prompt.isEmpty()) {
+            throw new ApiException(400, "El campo prompt es obligatorio");
+        }
         String lower = prompt.toLowerCase(Locale.ROOT);
 
         String destIso2 = String.valueOf(body.getOrDefault("destinationIso2", "")).toUpperCase();
@@ -182,7 +186,7 @@ public class ExportCopilotService {
         StringBuilder data = new StringBuilder();
         data.append("DATOS (motor experto local, no inventes nada fuera de esto):\n");
         appendData(data, "operationSummary", analysis.get("operationSummary"));
-        appendData(data, "regulatoryRequirements", analysis.get("regulatoryRequirements"));
+        appendReqs(data, analysis.get("regulatoryRequirements"));
         appendData(data, "applicableDocuments", analysis.get("applicableDocuments"));
         appendData(data, "exporterResponsibilities", analysis.get("exporterResponsibilities"));
         appendData(data, "importerResponsibilities", analysis.get("importerResponsibilities"));
@@ -199,6 +203,24 @@ public class ExportCopilotService {
     private void appendData(StringBuilder sb, String label, Object value) {
         if (value == null) return;
         sb.append(label).append(": ").append(String.valueOf(value)).append('\n');
+    }
+
+    /** Serializa requisitos regulatorios de forma compacta (título, descripción, fuente, obligatorio). */
+    private void appendReqs(StringBuilder sb, Object value) {
+        if (!(value instanceof List<?> list)) return;
+        StringBuilder buf = new StringBuilder("regulatoryRequirements:\n");
+        for (Object item : list) {
+            if (item instanceof RegulatoryRequirement r) {
+                buf.append("- [").append(r.isMandatory() ? "OBLIGATORIO" : "recomendado").append("] ")
+                        .append(r.getTitle()).append(": ").append(r.getDescription())
+                        .append(" (fuente: ").append(r.getOfficialSourceName());
+                if (r.getOfficialSourceUrl() != null && !r.getOfficialSourceUrl().isBlank()) {
+                    buf.append(" ").append(r.getOfficialSourceUrl());
+                }
+                buf.append(")\n");
+            }
+        }
+        sb.append(buf);
     }
 
     public List<ExportDocument> listDocuments(Long requestedCompanyId) {

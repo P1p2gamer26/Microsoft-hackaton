@@ -12,8 +12,10 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
@@ -61,14 +63,22 @@ public class GlobalExceptionHandler {
         return build(400, "Falta un parámetro obligatorio o tiene un formato incorrecto", null);
     }
 
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<Map<String, Object>> handleMethod(HttpRequestMethodNotSupportedException ex) {
+        return build(405, "Método HTTP no permitido para este recurso", null);
+    }
+
     @ExceptionHandler(DateTimeParseException.class)
     public ResponseEntity<Map<String, Object>> handleDate(DateTimeParseException ex) {
         return build(400, "La fecha enviada no tiene el formato esperado (AAAA-MM-DD)", null);
     }
 
-    @ExceptionHandler({ EntityNotFoundException.class, NoSuchElementException.class })
+    @ExceptionHandler({ EntityNotFoundException.class, NoSuchElementException.class, NoResourceFoundException.class })
     public ResponseEntity<Map<String, Object>> handleNotFound(Exception ex) {
-        return build(404, "No se encontró el registro solicitado", null);
+        String mensaje = ex instanceof NoResourceFoundException
+                ? "No se encontró el recurso solicitado"
+                : "No se encontró el registro solicitado";
+        return build(404, mensaje, null);
     }
 
     /** Columnas demasiado cortas, nulos obligatorios o claves duplicadas: siempre 400 con mensaje útil. */

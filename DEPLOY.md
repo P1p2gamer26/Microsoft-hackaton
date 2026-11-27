@@ -95,7 +95,7 @@ Las cuentas demo reales (todas con password `Demo2026!`) son `admin@cvb-demo.co`
 
 ## Copiloto IA: local vs nube
 
-- **Local (completo):** instala Ollama, descarga `qwen2.5:3b-instruct` y ejecuta `agent/start.ps1`. Ahí el agente usa tool-calling y cálculos reales.
+- **Local (completo):** instala Ollama, descarga `qwen3` y ejecuta `agent/start.ps1`. Ahí el agente usa tool-calling y cálculos reales.
 - **Nube (Render):** el mismo endpoint `/api/chat` responde con fragmentos indexados y citas (`mode: offline`). Es el respaldo para la demo pública sin depender de una GPU.
 
 ## Actualizar después

@@ -106,6 +106,15 @@ a { color: inherit; }
 .chip-revision { background: rgba(251, 191, 36, 0.15); color: var(--ambar); }
 .chip-riesgo { background: rgba(248, 113, 113, 0.15); color: var(--rojo); }
 
+/* En blanco y negro ningún chip puede introducir color. */
+:root[data-tema='blanco-negro'] .chip-cumple,
+:root[data-tema='blanco-negro'] .chip-revision,
+:root[data-tema='blanco-negro'] .chip-riesgo {
+  background: var(--pista);
+  border: 1px solid var(--borde);
+  color: var(--texto);
+}
+
 .boton { border: 0; border-radius: 12px; padding: 10px 16px; font-weight: 600; background: var(--cafe); color: var(--boton-texto); }
 .boton:hover { background: var(--cafe-claro); }
 .boton-fantasma { border: 1px solid var(--borde); border-radius: 12px; padding: 10px 16px; background: transparent; }
@@ -152,12 +161,22 @@ a { color: inherit; }
 :root[data-tema='blanco-negro'] .persona-boton:hover { background: var(--hover); }
 :root[data-tema='claro'] .persona-boton[aria-pressed='true'],
 :root[data-tema='blanco-negro'] .persona-boton[aria-pressed='true'] { background: var(--activo); border-color: var(--cafe); }
-:root[data-tema='claro'] .persona-avatar,
-:root[data-tema='blanco-negro'] .persona-avatar { color: var(--boton-texto); }
 :root[data-tema='claro'] .campo-textarea,
 :root[data-tema='claro'] .imp-campo input,
 :root[data-tema='blanco-negro'] .campo-textarea,
 :root[data-tema='blanco-negro'] .imp-campo input { background: var(--control); color: var(--texto); }
+
+/* Blanco y negro estricto: ningún badge puede introducir color. */
+:root[data-tema='blanco-negro'] .chip,
+:root[data-tema='blanco-negro'] .etiqueta,
+:root[data-tema='blanco-negro'] [class*='etiqueta-'],
+:root[data-tema='blanco-negro'] .origen-api,
+:root[data-tema='blanco-negro'] .origen-demo,
+:root[data-tema='blanco-negro'] .chip-ia {
+  background: var(--pista) !important;
+  border-color: var(--borde) !important;
+  color: var(--texto) !important;
+}
 
 @media (max-width: 760px), (prefers-reduced-motion: reduce) {
   /* ponytail: el desenfoque cuesta mucho en celulares gama media; fondo sólido en su lugar */

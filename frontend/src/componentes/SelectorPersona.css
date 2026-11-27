@@ -55,13 +55,13 @@
   height: 24px;
   border-radius: 50%;
   background: var(--cafe);
-  color: #1a0f08;
+  color: var(--boton-texto);
   font-size: 12px;
   font-weight: 700;
 }
 
 .persona-boton[aria-pressed='true'] .persona-avatar {
-  background: var(--acento);
+  background: var(--cafe);
 }
 
 .persona-datos {

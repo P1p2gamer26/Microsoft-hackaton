@@ -12,8 +12,8 @@ Por ahora la IA corre en local con Ollama, sin Azure. Reemplaza lo "simulado" de
 ## Modelos
 | Uso | Modelo | Tamaño aprox. | Por qué |
 |-----|--------|---------------|---------|
-| Texto (extraer, chat, redactar) | `qwen2.5:3b` | ~1,9 GB | Buen español, respeta JSON con esquema, cabe en la GPU |
-| Respaldo si va lento | `llama3.2:3b` o `qwen2.5:1.5b` | 2,0 / 1,0 GB | Más rápido, algo menos preciso |
+| Texto (extraer, chat, redactar) | `qwen3` | ~1,9 GB | Buen español, respeta JSON con esquema, cabe en la GPU |
+| Respaldo si va lento | `llama3.2:3b` o `qwen3:4b` | 2,0 / 1,0 GB | Más rápido, algo menos preciso |
 | Foto de remisión (opcional) | `qwen2.5vl:3b` | ~3,2 GB | Lee texto de una foto. Pesado: solo si sobra tiempo |
 
 Verificar los nombres exactos con `ollama list` y en ollama.com antes de fijarlos.
@@ -25,7 +25,7 @@ React (frontend)  ──►  Servicio IA en Python (FastAPI, carpeta ia/, puerto
       └─ si el servicio no responde en 8 s → reglas locales (extraerEntrega, plantillas) y etiqueta "Sin IA"
 ```
 - El frontend nunca llama a Ollama directo: así no hay que abrir CORS en Ollama y el día de mañana se cambia a Azure OpenAI sin tocar React.
-- Cada respuesta dice qué la produjo: `"motor": "ollama/qwen2.5:3b"` o `"motor": "reglas"`. La UI lo muestra con la etiqueta CALCULADO / IA.
+- Cada respuesta dice qué la produjo: `"motor": "ollama/qwen3"` o `"motor": "reglas"`. La UI lo muestra con la etiqueta CALCULADO / IA.
 - Salida estructurada con el parámetro `format` de Ollama (esquema JSON), temperatura 0 para extraer y 0,4 para redactar.
 
 ## Endpoints del servicio IA
@@ -58,7 +58,7 @@ Ollama no convierte voz a texto.
 ## Pasos
 | # | Tarea | Quién | Hecho cuando |
 |---|-------|-------|--------------|
-| 1 | Instalar Ollama (`winget install Ollama.Ollama`) y bajar `qwen2.5:3b` | Julian | `ollama run qwen2.5:3b "hola"` responde en español |
+| 1 | Instalar Ollama (`winget install Ollama.Ollama`) y bajar `qwen3` | Julian | `ollama run qwen3 "hola"` responde en español |
 | 2 | Medir velocidad: 10 frases de entrega → tiempo y aciertos | Claude | Tabla en este documento; objetivo < 4 s por frase en la GPU |
 | 3 | Servicio `ia/` en FastAPI con `/ia/salud`, `/ia/extraer`, `/ia/chat`, `/ia/declaracion` + pruebas con frases reales | Cascada → revisa Claude | `pytest` pasa; con Ollama apagado responde con `motor: reglas` |
 | 4 | Cliente `frontend/src/ia.ts` con timeout de 8 s y respaldo a reglas; indicador de IA en la barra lateral | Claude | Apagar Ollama no rompe ninguna pantalla |

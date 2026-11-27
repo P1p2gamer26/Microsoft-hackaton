@@ -35,9 +35,14 @@ if (-not $SoloFrontend) {
 
   $mvnExe = (Get-Command mvn -ErrorAction SilentlyContinue).Source
   if (-not $mvnExe) {
-    $mvnPortable = Join-Path $env:TEMP 'opencode\tools\maven\bin\mvn.cmd'
-    if (Test-Path $mvnPortable) { $mvnExe = $mvnPortable }
-    else { throw 'No se encontró mvn. Instala Maven 3.9 o pon mvn.cmd en el PATH.' }
+    $tempOpencode = if ($env:TEMP) { Join-Path $env:TEMP 'opencode' } else { 'C:\Users\SHERM\AppData\Local\Temp\opencode' }
+    $candidates = @(Join-Path $tempOpencode 'tools\maven\bin\mvn.cmd')
+    $candidates += (Get-ChildItem -Path $tempOpencode -Directory -Filter 'apache-maven-*' -ErrorAction SilentlyContinue |
+      ForEach-Object { Join-Path $_.FullName 'bin\mvn.cmd' })
+    $candidates += (Get-ChildItem -Path $env:TEMP -Directory -Filter 'apache-maven-*' -ErrorAction SilentlyContinue |
+      ForEach-Object { Join-Path $_.FullName 'bin\mvn.cmd' })
+    $mvnExe = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+    if (-not $mvnExe) { throw 'No se encontró mvn. Instala Maven 3.9 o pon mvn.cmd en el PATH.' }
   }
 
   $jar = Join-Path $raiz 'backend\target\coffee-value-bridge-1.0.0.jar'
@@ -48,6 +53,8 @@ if (-not $SoloFrontend) {
   }
   # Clave JWT aleatoria por sesión; los tokens no sobreviven a un reinicio.
   $env:JWT_SECRET = -join ((48..57) + (65..90) + (97..122) | Get-Random -Count 48 | ForEach-Object { [char]$_ })
+  # Demo determinista: Ollama queda en pausa; el copiloto usa el motor experto local.
+  $env:LLM_ENABLED = 'false'
   Write-Host '[1/3] Backend en http://localhost:8080'
   if (-not (Test-Url 'http://localhost:8080/api/v1/health')) {
     Start-Process -FilePath $javaExe -ArgumentList '-Xmx512m', '-jar', "`"$jar`"", '--spring.profiles.active=local' -WorkingDirectory (Join-Path $raiz 'backend') -WindowStyle Minimized

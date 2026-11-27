@@ -13,4 +13,4 @@ La plataforma utiliza interfaces desacopladas (`ExternalDataConnector` y `Connec
 | **Tasas de Cambio (FX)** | `FX_API_URL`, `FX_API_KEY` | Registro manual fechado con fuente | Conectar servicio oficial BanRep / BCE en producción. |
 | **OSRM / GraphHopper** | `OSRM_BASE_URL`, `GRAPHHOPPER_API_KEY` | Estimación geodésica editable (`ESTIMATED`) | Desplegar contenedor OSRM con mapa OSM de Colombia o configurar API key GraphHopper. |
 | **Cotizaciones Navieras / Operadores** | API privada 3PL / Freightos / Maersk | Escenarios editables marcados `ESTIMATED` | Integrar credenciales B2B de operadores contratados por los asociados. |
-| **LLM Export Copilot (Opcional)** | `LLM_API_URL`, `LLM_API_KEY`, `LLM_MODEL` | Motor determinístico experto + lectura PDFBox | Opcionalmente habilitar proveedor LLM empresarial manteniendo citas y descargos legales. |
+| **LLM Export Copilot (Opcional)** | `LLM_ENABLED`, `LLM_API_URL`, `LLM_API_KEY`, `LLM_MODEL` | Motor determinístico experto + lectura PDFBox | Opcionalmente habilitar proveedor LLM empresarial manteniendo citas y descargos legales. |

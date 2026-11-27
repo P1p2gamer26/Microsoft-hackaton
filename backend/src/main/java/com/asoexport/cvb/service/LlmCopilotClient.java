@@ -50,9 +50,9 @@ public class LlmCopilotClient {
         this.model = (model == null || model.isBlank()) ? "qwen3" : model.trim();
 
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-        factory.setConnectTimeout(Duration.ofSeconds(5));
-        // CPU local con Qwen3 puede tardar; esperamos generación larga antes de caer al motor experto.
-        factory.setReadTimeout(Duration.ofSeconds(300));
+        factory.setConnectTimeout(Duration.ofSeconds(2));
+        // Si el LLM local se cuelga, el motor experto responde igual; no bloqueamos la demo.
+        factory.setReadTimeout(Duration.ofSeconds(8));
         this.restClient = RestClient.builder().requestFactory(factory).build();
     }
 
@@ -95,7 +95,7 @@ public class LlmCopilotClient {
                 "model", model,
                 "stream", false,
                 "think", false,
-                "options", Map.of("temperature", 0.3, "num_predict", 600),
+                "options", Map.of("temperature", 0.3, "num_predict", 384),
                 "messages", List.of(
                         Map.of("role", "system", "content", systemPrompt),
                         Map.of("role", "user", "content", userPrompt)
