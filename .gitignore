@@ -1,0 +1,13 @@
+node_modules/
+dist/
+target/
+__pycache__/
+*.pyc
+.venv/
+*.db
+*.mv.db
+*.lock.db
+backend/data/
+.env
+.playwright-mcp/
+*.log
