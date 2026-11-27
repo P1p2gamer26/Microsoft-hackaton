@@ -5,6 +5,8 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: {
+    // túneles de exponer.ps1 (Cloudflare o ngrok)
+    allowedHosts: ['.trycloudflare.com', '.ngrok-free.app'],
     proxy: {
       '/api': {
         target: 'http://localhost:8080',
