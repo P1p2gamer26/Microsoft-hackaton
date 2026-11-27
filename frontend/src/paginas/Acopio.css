@@ -244,6 +244,21 @@
   .acopio-fincas,
   .acopio-campos,
   .acopio-lateral { grid-template-columns: 1fr; }
-  .acopio-tabla { overflow-x: auto; }
-  .acopio-fila { min-width: 560px; }
+  .acopio-tabla { overflow: visible; }
+  .acopio-fila-cabecera { display: none; }
+  .acopio-fila {
+    min-width: 0;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 12px;
+    padding: 12px;
+  }
+  .acopio-fila strong { grid-column: 1 / -1; font-size: 13px; }
+  .acopio-fila [data-etiqueta]::before {
+    content: attr(data-etiqueta) ': ';
+    color: var(--texto-suave);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .acopio-fila .chip { white-space: normal; }
 }
