@@ -1,0 +1,38 @@
+/* Estilos compartidos del módulo comercial (antes Coffee Value Bridge), en el tema de CaféTrace */
+.com-pagina { padding: 28px; display: flex; flex-direction: column; gap: 18px; max-width: 1280px; }
+.com-cabecera { padding: 22px 24px; display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
+.com-cabecera p { margin: 6px 0 0; color: var(--texto-suave); max-width: 720px; }
+.com-ojeada { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--cafe-claro); font-weight: 600; margin: 0 0 6px; }
+.com-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+.com-kpi { padding: 16px; }
+.com-kpi strong { display: block; font-family: 'Space Grotesk', Inter, sans-serif; font-size: 26px; }
+.com-kpi span { color: var(--texto-suave); font-size: 13px; }
+.com-bloque { padding: 20px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.com-bloque h2 { font-size: 18px; }
+.com-rejilla { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px; }
+.com-tabla-wrap { overflow-x: auto; min-width: 0; }
+.com-tabla { width: 100%; border-collapse: collapse; font-size: 14px; }
+.com-tabla th { text-align: left; color: var(--texto-suave); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; padding: 8px 10px; border-bottom: 1px solid var(--borde); white-space: nowrap; }
+.com-tabla td { padding: 10px; border-bottom: 1px solid var(--borde); vertical-align: top; }
+.com-tabla tr:hover td { background: rgba(255, 255, 255, 0.02); }
+.com-num { text-align: right; font-variant-numeric: tabular-nums; }
+.com-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; align-items: end; }
+.com-campo { display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: var(--texto-suave); }
+.com-campo input, .com-campo select, .com-campo textarea {
+  font: inherit; color: var(--texto); background: rgba(0, 0, 0, 0.25); border: 1px solid var(--borde);
+  border-radius: 10px; padding: 10px 12px; min-height: 44px;
+}
+.com-campo textarea { min-height: 90px; resize: vertical; }
+.com-barras { display: flex; flex-direction: column; gap: 8px; }
+.com-barra { display: grid; grid-template-columns: minmax(90px, 160px) 1fr auto; gap: 10px; align-items: center; font-size: 13px; }
+.com-barra-pista { height: 10px; border-radius: 999px; background: rgba(255, 255, 255, 0.06); overflow: hidden; }
+.com-barra-pista i { display: block; height: 100%; border-radius: 999px; background: var(--acento); }
+.com-pestanas { display: flex; gap: 6px; flex-wrap: wrap; }
+.com-pestanas button { border: 1px solid var(--borde); background: transparent; border-radius: 999px; padding: 8px 14px; color: var(--texto-suave); }
+.com-pestanas button[aria-pressed='true'] { background: rgba(200, 135, 90, 0.18); color: var(--texto); border-color: var(--cafe); }
+.com-estado { padding: 22px; text-align: center; color: var(--texto-suave); }
+.com-error { padding: 16px 18px; border-left: 3px solid var(--rojo); color: var(--texto); }
+.com-error button { margin-top: 10px; }
+.com-nota { font-size: 13px; color: var(--texto-suave); }
+.com-acciones { display: flex; gap: 10px; flex-wrap: wrap; }
+@media (max-width: 760px) { .com-pagina { padding: 16px; } }
