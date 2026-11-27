@@ -68,8 +68,14 @@ Para probar el backend con login:
 curl https://cvb-hackaton-api.onrender.com/api/v1/auth/demo-accounts
 curl -X POST https://cvb-hackaton-api.onrender.com/api/v1/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"laura@asoexport.com.co","password":"demo123"}'
+  -d '{"email":"cumplimiento@cordillera-demo.co","password":"Demo2026!"}'
 ```
+
+Las cuentas demo reales (todas con password `Demo2026!`) son `admin@cvb-demo.co`,
+`exportador@cordillera-demo.co`, `exportador@sierraverde-demo.co`,
+`comercial@cordillera-demo.co`, `logistica@cordillera-demo.co`,
+`cumplimiento@cordillera-demo.co`, `visualizador@cordillera-demo.co`, además de
+`acopio@cordillera-demo.co` y `comprador@nordkaffee-demo.co`, usadas por el selector de personas.
 
 ## Base de datos
 

@@ -66,7 +66,8 @@ export function ProveedorPersona({ children }: { children: ReactNode }) {
       return
     }
 
-    const password = import.meta.env.VITE_DEMO_PASSWORD ?? ''
+    // Cuentas demo publicas del backend; se puede sobreescribir con VITE_DEMO_PASSWORD.
+    const password = import.meta.env.VITE_DEMO_PASSWORD ?? 'Demo2026!'
     configurarCredenciales({ email, password })
     const ok = await iniciarSesion(email, password)
     if (!ok) {

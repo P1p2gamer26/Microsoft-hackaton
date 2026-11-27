@@ -66,6 +66,8 @@ services:
           name: cvb-hackaton-api
           type: web
           envVarKey: RENDER_EXTERNAL_URL
+      - key: VITE_DEMO_PASSWORD
+        value: Demo2026!
       - key: VITE_AGENT_URL
         fromService:
           name: cvb-hackaton-agente

@@ -27,7 +27,7 @@
 | Modo offline del agente (sin Ollama, para la nube) | ✅ | `mode: offline` con fragmentos indexados y fuentes |
 | Blueprint de Render (web + api + agente + Postgres/PostGIS) | ✅ | `render.yaml`, `DEPLOY.md` |
 | Backend corriendo en local con JDK 21 + H2 | 🔄 de validación | dependencias Maven descargándose en el arranque |
-| `iniciar-demo.ps1` (un comando para levantar todo) | ❌ | no existe todavía |
+| `iniciar-demo.ps1` (backend + frontend + analytics opcional) | ✅ | detecta JDK 21 y Maven portable; Ollama/agente quedan en pausa (se arrancan aparte con `agent/start.ps1`) |
 | Pantallas conectadas a Buyers / Comparador / Copiloto | ❌ | `Compradores.tsx` aún usa `datos.ts` con etiqueta "demo"; no hay pantalla de Comparador ni de Copiloto |
 | IA aplicada a Campo y Declaración EUDR | ❌ | hay plan en `plan_ia_ollama.md`, pero los endpoints `/ia/*` no existen |
 | Analytics desplegado en Render | ❌ | el servicio Flask no está en `render.yaml` |
@@ -55,12 +55,12 @@ RENDER (demo pública)
 ## 4. Trabajo por tandas
 
 ### Tanda A — Arranque en un comando (30 min)
-**Archivo:** `iniciar-demo.ps1` en la raíz.
+**Archivo:** `iniciar-demo.ps1` en la raíz (ya existe; **ajustado**). Ollama queda fuera de esta tanda.
 
-1. Detectar JDK 21 y Maven (`C:\Program Files\Eclipse Adoptium\jdk-21*`, o PATH).
-2. Levantar, si no están vivos: Ollama, backend (`mvn spring-boot:run`, perfil `local`), analytics (`uvicorn`/`python app.main:app` según su Dockerfile), agente (`agent/server.py`) y frontend (`npm run dev`).
-3. Esperar a `/actuator/health`, `/api/health`, `/health` y `http://localhost:5173` antes de abrir el navegador.
-4. Imprimir un cuadro con las 4 URLs y el estado de cada servicio.
+1. Detectar JDK 21 (`C:\Program Files\Eclipse Adoptium\jdk-21*`) y anteponerlo al PATH; si falta Maven, usar el portable o avisar.
+2. Levantar, si no están vivos: backend (JAR, perfil `local`), analytics (solo con `-ConAnalytics`) y frontend (`npm run dev`).
+3. Esperar a `/api/v1/health`, `/health` y `http://localhost:5173` antes de abrir el navegador.
+4. Imprimir un cuadro con las URLs y el estado de cada servicio.
 
 **Hecho cuando:** con todo apagado, `.\iniciar-demo.ps1` deja la demo usable en menos de 3 minutos (salvo primera descarga de dependencias).
 
@@ -74,7 +74,8 @@ RENDER (demo pública)
 
 **Hecho cuando:** apagando el backend las pantallas siguen mostrando datos demo con etiqueta; encendiéndolo, muestran datos reales y el copiloto cita fuentes.
 
-### Tanda C — IA en el flujo de campo y cumplimiento (2 h)
+### Tanda C — IA en el flujo de campo y cumplimiento (2 h) · EN PAUSA
+> Por decisión del equipo, Ollama y el agente se dejan a un lado temporalmente; se arrancan aparte con `agent/start.ps1` y no bloquean la integración CaféTrace + Coffee Value Bridge.
 **Archivos:** `agent/server.py`, `frontend/src/paginas/Campo.tsx`, `Cumplimiento.tsx`, nuevo `frontend/src/ia.ts`.
 
 1. Añadir al agente, usando el mismo patrón de `/api/chat` con fallback:
