@@ -1,0 +1,237 @@
+.acopio {
+  min-height: 100vh;
+  padding: 32px;
+  background:
+    radial-gradient(circle at 12% 10%, rgba(200, 135, 90, 0.12), transparent 38%),
+    radial-gradient(circle at 92% 92%, rgba(52, 211, 153, 0.07), transparent 34%);
+}
+
+.acopio-cabecera {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.acopio-eyebrow {
+  margin: 0 0 6px;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--cafe-claro);
+}
+
+.acopio-cabecera h1 { font-size: 36px; }
+.acopio-bajada { margin: 6px 0 0; color: var(--texto-suave); }
+
+.acopio-estado {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.acopio-badge { padding: 6px 12px; }
+.acopio-estado small { font-size: 11px; color: var(--texto-suave); }
+
+.acopio-rejilla {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 420px;
+  gap: 20px;
+  align-items: start;
+}
+
+.acopio-formulario { padding: 24px; }
+.acopio-formulario h2,
+.acopio-qr-panel h2,
+.acopio-lotes h2 { font-size: 20px; }
+.acopio-ayuda { margin: 6px 0 18px; font-size: 13px; color: var(--texto-suave); }
+
+.acopio-fincas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.acopio-finca {
+  display: grid;
+  grid-template-columns: 18px 24px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid var(--borde);
+  background: rgba(255, 255, 255, 0.03);
+  cursor: pointer;
+}
+
+.acopio-finca.seleccionada {
+  border-color: rgba(232, 180, 138, 0.55);
+  background: rgba(200, 135, 90, 0.12);
+}
+
+.acopio-finca input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--cafe);
+}
+
+.acopio-finca-texto { min-width: 0; }
+.acopio-finca-texto strong { display: block; font-size: 13px; }
+.acopio-finca-texto small {
+  display: block;
+  font-size: 10px;
+  color: var(--texto-suave);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.acopio-finca .chip { font-size: 10px; padding: 2px 7px; white-space: nowrap; }
+
+.acopio-campos {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.acopio-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--texto-suave);
+}
+
+.acopio-campo input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--borde);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--texto);
+  font: inherit;
+  font-size: 16px;
+}
+
+.acopio-campo.con-aviso input {
+  border-color: var(--ambar);
+  box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.12);
+}
+
+.acopio-aviso { align-self: flex-start; font-size: 10px; }
+.acopio-error { margin: 14px 0 0; color: var(--rojo); font-size: 13px; }
+.acopio-crear { margin-top: 20px; min-width: 180px; min-height: 46px; font-size: 15px; }
+
+.acopio-lateral {
+  display: grid;
+  gap: 20px;
+}
+
+.acopio-qr-panel {
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+
+.acopio-qr-marco {
+  width: 180px;
+  height: 180px;
+  padding: 12px;
+  border-radius: 16px;
+  background: #f5ebe0;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+}
+
+.acopio-qr { width: 100%; height: 100%; display: block; }
+.acopio-id { font-family: 'Space Grotesk', sans-serif; font-size: 22px; letter-spacing: 0.04em; }
+.acopio-qr-pie { font-size: 11px; color: var(--texto-suave); }
+
+.acopio-qr-vacio {
+  width: 100%;
+  min-height: 180px;
+  border: 1px dashed var(--borde);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--texto-suave);
+}
+
+.acopio-qr-vacio span { font-size: 46px; opacity: 0.45; }
+.acopio-qr-vacio p { margin: 0; font-size: 13px; }
+
+.acopio-enlace {
+  margin-top: 4px;
+  padding-bottom: 2px;
+  border-bottom: 1px solid rgba(232, 180, 138, 0.35);
+  color: var(--cafe-claro);
+  font-size: 12px;
+  text-decoration: none;
+}
+
+.acopio-enlace:hover { color: var(--texto); }
+
+.acopio-lotes { padding: 20px; overflow: hidden; }
+
+.acopio-lotes-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.acopio-lotes-cabecera span {
+  font-size: 11px;
+  color: var(--texto-suave);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.acopio-tabla { display: grid; gap: 6px; }
+
+.acopio-fila {
+  display: grid;
+  grid-template-columns: 1.25fr 0.85fr 0.6fr 0.8fr 0.5fr 0.95fr;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 8px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  font-size: 11px;
+}
+
+.acopio-fila-cabecera {
+  background: transparent;
+  color: var(--texto-suave);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.acopio-fila strong { font-size: 11px; }
+.acopio-fila .chip { font-size: 9px; padding: 2px 6px; }
+
+@media (max-width: 1100px) {
+  .acopio-rejilla { grid-template-columns: 1fr; }
+  .acopio-lateral { grid-template-columns: 360px 1fr; }
+}
+
+@media (max-width: 760px) {
+  .acopio { padding: 18px 12px; }
+  .acopio-cabecera { flex-direction: column; }
+  .acopio-estado { align-items: flex-start; }
+  .acopio-fincas,
+  .acopio-campos,
+  .acopio-lateral { grid-template-columns: 1fr; }
+  .acopio-tabla { overflow-x: auto; }
+  .acopio-fila { min-width: 560px; }
+}
