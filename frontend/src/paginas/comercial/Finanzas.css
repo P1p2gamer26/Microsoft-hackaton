@@ -1,0 +1,108 @@
+.finanzas-kpi-destaque strong { color: var(--verde); }
+
+.finanzas-titulo-seccion {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.finanzas-desglose {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) minmax(360px, 1.5fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.finanzas-etiqueta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.finanzas-detalle {
+  display: block;
+  max-width: 420px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--texto-suave);
+  font-size: 11px;
+  margin-top: 2px;
+}
+
+.finanzas-sensibilidad {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.finanzas-punto {
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  gap: 12px;
+  align-items: start;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--borde);
+}
+
+.finanzas-variacion {
+  color: var(--cafe-claro);
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+}
+
+.finanzas-lineas {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.finanzas-linea {
+  display: grid;
+  grid-template-columns: minmax(100px, 140px) 1fr minmax(90px, auto);
+  gap: 10px;
+  align-items: center;
+  font-size: 12px;
+  color: var(--texto-suave);
+}
+
+.com-barra-pista i.finanzas-barra-precio { background: var(--cafe); }
+.com-barra-pista i.finanzas-barra-logistica { background: var(--ambar); }
+
+.finanzas-conversor { align-items: end; }
+
+.finanzas-resultado {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid var(--borde);
+  background: rgba(0, 0, 0, 0.2);
+  font-size: 13px;
+  color: var(--texto-suave);
+}
+
+.finanzas-convertido {
+  color: var(--verde);
+  font-family: 'Space Grotesk', Inter, sans-serif;
+  font-size: 24px;
+  font-variant-numeric: tabular-nums;
+}
+
+.finanzas-campo-fuente { grid-column: span 2; }
+
+@media (max-width: 960px) {
+  .finanzas-desglose { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 760px) {
+  .finanzas-linea { grid-template-columns: 1fr; gap: 4px; }
+  .finanzas-linea .com-num { text-align: left; }
+  .finanzas-punto { grid-template-columns: 1fr; gap: 6px; }
+  .finanzas-campo-fuente { grid-column: auto; }
+  .finanzas-pagina .boton { width: 100%; }
+}

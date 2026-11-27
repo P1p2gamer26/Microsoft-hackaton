@@ -1,0 +1,54 @@
+.reportes-cuadricula {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.reportes-tarjeta {
+  gap: 8px;
+}
+
+.reportes-titulo {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.reportes-titulo h2 {
+  font-size: 16px;
+}
+
+.reportes-titulo code {
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(200, 135, 90, 0.16);
+  color: var(--cafe-claro);
+  font-size: 11px;
+}
+
+.reportes-tarjeta .com-acciones {
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid var(--borde);
+}
+
+.reportes-preview {
+  gap: 12px;
+}
+
+.reportes-tabla {
+  font-size: 12px;
+}
+
+.reportes-tabla td {
+  min-width: 120px;
+  max-width: 340px;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 760px) {
+  .reportes-tarjeta .com-acciones,
+  .reportes-preview .boton-fantasma { width: 100%; }
+}
