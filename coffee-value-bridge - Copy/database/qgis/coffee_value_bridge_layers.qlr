@@ -1,0 +1,23 @@
+<!DOCTYPE qgis-layer-definition>
+<qlr>
+  <!-- COFFEE VALUE BRIDGE - QGIS PostGIS Layer Definition Template
+       Connect in QGIS: Layer -> Add Layer -> Add PostGIS Layers
+       Host: localhost | Port: 5432 | Database: coffee_value_bridge | SRID: 4326
+       Spatial Layers Available:
+       1. coffee_origins (location)          - Zonas Cafeteras de Colombia
+       2. exporters (location)               - Empresas Exportadoras
+       3. warehouses (location)              - Plantas de Tostión, Centros de Acopio y Bodegas
+       4. ports (location)                   - Puertos Colombianos, Internacionales y Aeropuertos
+       5. buyers (location)                  - Compradores Internacionales
+       6. distribution_centers (location)    - Centros de Distribución Internacional
+       7. logistics_routes (route_geometry)  - Rutas Terrestres, Marítimas y Aéreas
+  -->
+  <layer-tree-group name="COFFEE VALUE BRIDGE - Cadena Logística GIS">
+    <layer-tree-layer name="Zonas Cafeteras (coffee_origins)" providerKey="postgres" source="dbname='coffee_value_bridge' host=localhost port=5432 sslmode=disable key='id' srid=4326 type=Point table=&quot;public&quot;.&quot;coffee_origins&quot; (location)" />
+    <layer-tree-layer name="Puertos y Aeropuertos (ports)" providerKey="postgres" source="dbname='coffee_value_bridge' host=localhost port=5432 sslmode=disable key='id' srid=4326 type=Point table=&quot;public&quot;.&quot;ports&quot; (location)" />
+    <layer-tree-layer name="Bodegas y Tostadoras (warehouses)" providerKey="postgres" source="dbname='coffee_value_bridge' host=localhost port=5432 sslmode=disable key='id' srid=4326 type=Point table=&quot;public&quot;.&quot;warehouses&quot; (location)" />
+    <layer-tree-layer name="Compradores Internacionales (buyers)" providerKey="postgres" source="dbname='coffee_value_bridge' host=localhost port=5432 sslmode=disable key='id' srid=4326 type=Point table=&quot;public&quot;.&quot;buyers&quot; (location)" />
+    <layer-tree-layer name="Centros de Distribución (distribution_centers)" providerKey="postgres" source="dbname='coffee_value_bridge' host=localhost port=5432 sslmode=disable key='id' srid=4326 type=Point table=&quot;public&quot;.&quot;distribution_centers&quot; (location)" />
+    <layer-tree-layer name="Rutas Logísticas (logistics_routes)" providerKey="postgres" source="dbname='coffee_value_bridge' host=localhost port=5432 sslmode=disable key='id' srid=4326 type=LineString table=&quot;public&quot;.&quot;logistics_routes&quot; (route_geometry)" />
+  </layer-tree-group>
+</qlr>
